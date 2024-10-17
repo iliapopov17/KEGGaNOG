@@ -136,7 +136,7 @@ def main():
     parser.add_argument("--i", required=True, help="Path to eggnog-mapper output file")
     parser.add_argument("--o", required=True, help="Output folder to save results")
     parser.add_argument(
-        "--dpi", type=int, default=600, help="DPI for the output image (default: 600)"
+        "--dpi", type=int, default=300, help="DPI for the output image (default: 300)"
     )
     parser.add_argument(
         "--n", default="SAMPLE", help="Sample name for labeling (default: SAMPLE)"
