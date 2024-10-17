@@ -23,7 +23,7 @@
 
 ## Motivation
 
-[`eggNOG-mapper`](https://github.com/eggnogdb/eggnog-mapper) 🤝 [`KEGG-Decoder`](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/README.md)
+[**`eggNOG-mapper`**](https://github.com/eggnogdb/eggnog-mapper) 🤝 [**`KEGG-Decoder`**](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/README.md)
 
 - `eggNOG-mapper` is a beautiful tool for fast functional annotation of novel sequences. Yet it does not provide any visualization functions.
 - `KEGG-Decoder` is a perfect tool for visualizing KEGG Pathways. But it takes only KEGG-Koala outputs (including blastKOALA, ghostKOALA, KOFAMSCAN).
