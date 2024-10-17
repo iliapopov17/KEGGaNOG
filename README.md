@@ -21,6 +21,15 @@
 <br>
 <br>
 
+## Motivation
+
+`eggNOG-mapper` 🤝 `KEGG-Decoder`
+
+- `eggNOG-mapper` is a beautiful tool for fast functional annotation of novel sequences. Yet it does not provide any visualization functions.
+- `KEGG-Decoder` is a perfect tool for visualizing KEGG Pathways. But it takes only KEGG-Koala outputs (including blastKOALA, ghostKOALA, KOFAMSCAN).
+- `KEGG-Koala` is a web-tool which can work for more than 24 hours. `eggNOG-mapper` can be installed locally on your PC / server and work faster.
+- This tool `KEGGaNOG` makes `eggNOG-mapper` meet `KEGG-Decoder`! It will parse `eggNOG-mapper` output, make it fit for the input to `KEGG-Decoder` and then visualize KEGG Pathways as the heatmap!
+
 ```python
 python KEGGaNOG.py --i out.emapper.annotations --o output --dpi 600 --n '$\it{Lpb. plantarum}$ test'
 ```
