@@ -1,0 +1,10 @@
+biopython==1.74
+keggdecoder==1.3
+matplotlib==3.0.3
+numpy==1.17.3
+pandas==0.25.2
+plotly==4.2.1
+pyparsing==3.1.4
+scipy==1.3.1
+seaborn==0.9.0
+tanglegram==0.1.0
