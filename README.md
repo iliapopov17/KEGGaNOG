@@ -33,9 +33,9 @@
 
 ## Installation
 
-`KEGG-Decoder` is hardwired into `KEGGaNOG`.<br>
-`KEGG-Decoder` uses `python=3.6`.<br>
-That's `KEGGaNOG` uses this version too.
+`KEGG-Decoder` is hardwired into `KEGGaNOG`<br>
+`KEGG-Decoder` uses `python=3.6`<br>
+That's `KEGGaNOG` uses this version too
 
 ```bash
 conda create -n kegganog python=3.6
