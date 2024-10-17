@@ -29,7 +29,7 @@
 - `KEGG-Decoder` is a perfect tool for visualizing KEGG Pathways. But it takes only KEGG-Koala outputs (including blastKOALA, ghostKOALA, KOFAMSCAN).
 - `KEGG-Koala` is a web-tool which can work for more than 24 hours. `eggNOG-mapper` can be installed locally on your PC / server and work faster.
 - This tool `KEGGaNOG` makes `eggNOG-mapper` meet `KEGG-Decoder`! It will parse `eggNOG-mapper` output, make it fit for the input to `KEGG-Decoder` and then visualize KEGG Pathways as the heatmap!
-- Pro-tip: `eggNOG-mapper` and `KEGGaNOG` could be wrapped into 🐍 `Snakemake` pipeline to make metabolic profiling of any sequence a "one-click" process!
+- **Pro-tip:** `eggNOG-mapper` and `KEGGaNOG` could be wrapped into 🐍 `Snakemake` pipeline to make metabolic profiling a "one-click" process!
 
 ```python
 python KEGGaNOG.py --i out.emapper.annotations --o output --dpi 600 --n '$\it{Lpb. plantarum}$ test'
@@ -39,7 +39,7 @@ python KEGGaNOG.py --i out.emapper.annotations --o output --dpi 600 --n '$\it{Lp
 
 `KEGG-Decoder` is hardwired into `KEGGaNOG`.<br>
 `KEGG-Decoder` uses `python=3.6`.<br>
-That's `KEGGaNOG` uses it too.
+That's `KEGGaNOG` uses this version too.
 
 ```bash
 conda create -n kegganog python=3.6
@@ -57,4 +57,4 @@ Contributions are welcome! If you have any ideas, bug fixes, or enhancements, fe
 ## Contact
 For any inquiries or support, feel free to contact me via [email](mailto:iljapopov17@gmail.com)
 
-Happy data exploring! 💻🧐
+Happy functional annotation! 💻🧬
