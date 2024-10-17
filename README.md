@@ -34,3 +34,27 @@
 ```python
 python KEGGaNOG.py --i out.emapper.annotations --o output --dpi 600 --n '$\it{Lpb. plantarum}$ test'
 ```
+
+## Installation
+
+`KEGG-Decoder` is hardwired into `KEGGaNOG`.<br>
+`KEGG-Decoder` uses `python=3.6`.<br>
+That's `KEGGaNOG` uses it too.
+
+```bash
+conda create -n kegganog python=3.6
+conda activate kegganog
+pip install kegganog
+```
+
+## Usage Guide
+
+🔗 Visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
+
+## Contributing
+Contributions are welcome! If you have any ideas, bug fixes, or enhancements, feel free to open an issue or submit a pull request.
+
+## Contact
+For any inquiries or support, feel free to contact me via [email](mailto:iljapopov17@gmail.com)
+
+Happy data exploring! 💻🧐
