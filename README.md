@@ -31,10 +31,6 @@
 - This tool `KEGGaNOG` makes `eggNOG-mapper` meet `KEGG-Decoder`! It will parse `eggNOG-mapper` output, make it fit for the input to `KEGG-Decoder` and then visualize KEGG Pathways as the heatmap!
 - **Pro-tip:** `eggNOG-mapper` and `KEGGaNOG` could be wrapped into 🐍 `Snakemake` pipeline to make metabolic profiling a "one-click" process!
 
-```python
-python KEGGaNOG.py --i out.emapper.annotations --o output --dpi 600 --n '$\it{Lpb. plantarum}$ test'
-```
-
 ## Installation
 
 `KEGG-Decoder` is hardwired into `KEGGaNOG`.<br>
