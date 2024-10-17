@@ -19,7 +19,6 @@
 
 <br>
 <br>
-<br>
 
 ## Motivation
 
