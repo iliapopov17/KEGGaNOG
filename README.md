@@ -13,6 +13,7 @@
 ![Numpy](https://img.shields.io/badge/Dependecy-Numpy-steelblue)
 ![KEGG-Decoder](https://img.shields.io/badge/Dependecy-KEGG_Decoder-steelblue)
 ![License](https://img.shields.io/badge/License-MIT-steelblue)
+[![Downloads](https://static.pepy.tech/badge/kegganog)](https://pepy.tech/project/kegganog)
 
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0)
