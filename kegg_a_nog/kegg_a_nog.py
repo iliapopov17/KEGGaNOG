@@ -9,121 +9,6 @@ import subprocess
 import csv
 
 
-function_groups = {
-    "Carbon Metabolism": [
-        "glycolysis",
-        "gluconeogenesis",
-        "TCA Cycle",
-        "RuBisCo",
-        "CBB Cycle",
-        "rTCA Cycle",
-        "Wood-Ljungdahl",
-        "Entner-Doudoroff Pathway",
-    ],
-    "Oxidative Phosphorylation": [
-        "NAD(P)H-quinone oxidoreductase",
-        "NADH-quinone oxidoreductase",
-        "Na-NADH-ubiquinone oxidoreductase",
-        "F-type ATPase",
-        "V-type ATPase",
-        "Cytochrome c oxidase",
-        "Ubiquinol-cytochrome c reductase",
-        "Cytochrome o ubiquinol oxidase",
-        "Cytochrome aa3-600 menaquinol oxidase",
-        "Cytochrome c oxidase, cbb3-type",
-        "Cytochrome bd complex",
-    ],
-    "Sulfur and Nitrogen Metabolism": [
-        "ammonia oxidation (amo/pmmo)",
-        "hydroxylamine oxidation",
-        "nitrite oxidation",
-        "dissimilatory nitrate reduction",
-        "DNRA",
-        "nitrite reduction",
-        "nitrogen fixation",
-        "sulfide oxidation",
-        "sulfite dehydrogenase",
-        "DMSP demethylation",
-        "sulfur disproportionation",
-    ],
-    "Hydrogen and Redox Metabolism": [
-        "NiFe hydrogenase",
-        "ferredoxin hydrogenase",
-        "hydrogen:quinone oxidoreductase",
-        "NAD-reducing hydrogenase",
-        "NADP-reducing hydrogenase",
-        "NiFe hydrogenase Hyd-1",
-    ],
-    "Amino Acid Metabolism": [
-        "histidine",
-        "arginine",
-        "lysine",
-        "serine",
-        "threonine",
-        "asparagine",
-        "glutamine",
-        "cysteine",
-        "glycine",
-        "proline",
-        "alanine",
-        "valine",
-        "methionine",
-        "phenylalanine",
-        "isoleucine",
-        "leucine",
-        "tryptophan",
-        "tyrosine",
-        "aspartate",
-        "glutamate",
-    ],
-    "Bacterial Secretion Systems": [
-        "Type I Secretion",
-        "Type II Secretion",
-        "Type III Secretion",
-        "Type IV Secretion",
-        "Type Vabc Secretion",
-        "Type VI Secretion",
-        "Sec-SRP",
-        "Twin Arginine Targeting",
-    ],
-    "Biofilm Formation and Motility": [
-        "Flagellum",
-        "Chemotaxis",
-        "Biofilm PGA Synthesis protein",
-        "Colanic acid biosynthesis",
-        "Adhesion",
-        "Competence-related core components",
-        "Competence-related related components",
-    ],
-    "Transporters": [
-        "transporter: urea",
-        "transporter: phosphate",
-        "transporter: phosphonate",
-        "transporter: vitamin B12",
-        "transporter: thiamin",
-        "Cobalt transporter CbiMQ",
-        "Nickel ABC-type transporter NikA",
-        "Copper transporter CopA",
-        "Ferrous iron transporter FeoB",
-        "Ferric iron ABC-type transporter AfuA",
-        "Fe-Mn transporter MntH",
-    ],
-    "Miscellaneous Pathways": [
-        "Methanogenesis via methanol",
-        "Methanogenesis via acetate",
-        "Photosystem II",
-        "Photosystem I",
-        "Retinal biosynthesis",
-        "Mixed acid: Lactate",
-        "Mixed acid: Formate",
-        "Naphthalene degradation to salicylate",
-        "Polyhydroxybutyrate synthesis",
-        "Carotenoid biosynthesis",
-        "Arsenic reduction",
-    ],
-}
-
-
 # Function to parse eggnog-mapper output and prepare for KEGG-Decoder
 def parse_emapper(input_file, temp_folder):
     # Read the input file
@@ -178,7 +63,7 @@ def run_kegg_decoder(input_file, temp_folder):
 
 
 # Function to generate the heatmap
-def generate_heatmap(kegg_decoder_file, output_folder, dpi, sample_name):
+def generate_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
     # Read the KEGG-Decoder output
     with open(kegg_decoder_file, "r") as file:
         lines = file.readlines()
@@ -204,7 +89,7 @@ def generate_heatmap(kegg_decoder_file, output_folder, dpi, sample_name):
     # Plot each part
     sns.heatmap(
         df1.pivot_table(values=sample_name, index="Function", fill_value=0),
-        cmap="Blues",
+        cmap=f"{color}",
         annot=True,
         linewidths=0.5,
         ax=axes[0],
@@ -214,7 +99,7 @@ def generate_heatmap(kegg_decoder_file, output_folder, dpi, sample_name):
 
     sns.heatmap(
         df2.pivot_table(values=sample_name, index="Function", fill_value=0),
-        cmap="Blues",
+        cmap=f"{color}",
         annot=True,
         linewidths=0.5,
         ax=axes[1],
@@ -224,11 +109,12 @@ def generate_heatmap(kegg_decoder_file, output_folder, dpi, sample_name):
 
     sns.heatmap(
         df3.pivot_table(values=sample_name, index="Function", fill_value=0),
-        cmap="Blues",
+        cmap=f"{color}",
         annot=True,
         linewidths=0.5,
         ax=axes[2],
         cbar_ax=cbar_ax,
+        cbar_kws={"label": "Pathway completeness"},
     )
     axes[2].set_title("Part 3")
 
@@ -262,6 +148,13 @@ def main():
         help="DPI for the output image (default: 300)",
     )
     parser.add_argument(
+        "-c",
+        "--color",
+        "--colour",
+        default="Blues",
+        help="Cmap for seaborn heatmap. Recommended options: Greys, Purples, Blues, Greens, Oranges, Reds (default: Blues)",
+    )
+    parser.add_argument(
         "-n",
         "--name",
         default="SAMPLE",
@@ -282,7 +175,7 @@ def main():
     kegg_decoder_file = run_kegg_decoder(parsed_filtered_file, temp_folder)
 
     # Step 3: Generate the heatmap
-    generate_heatmap(kegg_decoder_file, args.output, args.dpi, args.name)
+    generate_heatmap(kegg_decoder_file, args.output, args.dpi, args.color, args.name)
 
     print(f"Heatmap saved in {args.output}/heatmap_figure.png")
 
