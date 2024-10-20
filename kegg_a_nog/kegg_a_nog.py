@@ -135,10 +135,16 @@ def main():
         description="KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization."
     )
     parser.add_argument(
-        "-i", "--input", required=True, help="Path to eggnog-mapper output file"
+        "-i",
+        "--input",
+        required=True,
+        help="Path to eggnog-mapper output file",
     )
     parser.add_argument(
-        "-o", "--output", required=True, help="Output folder to save results"
+        "-o",
+        "--output",
+        required=True,
+        help="Output folder to save results",
     )
     parser.add_argument(
         "-dpi",
@@ -160,6 +166,7 @@ def main():
         default="SAMPLE",
         help="Sample name for labeling (default: SAMPLE)",
     )
+    parser.add_argument("--version", action="version", version="%(prog)s 0.1.6")
 
     args = parser.parse_args()
 
