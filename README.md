@@ -45,7 +45,25 @@ pip install kegganog
 
 ## Usage Guide
 
-🔗 Visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
+```
+usage: kegg_a_nog.py [-h] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME]
+
+KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT, --input INPUT
+                        Path to eggnog-mapper output file
+  -o OUTPUT, --output OUTPUT
+                        Output folder to save results
+  -dpi DPI, --dpi DPI   DPI for the output image (default: 300)
+  -c COLOR, --color COLOR, --colour COLOR
+                        Cmap for seaborn heatmap. Recommended options: Greys,
+                        Purples, Blues, Greens, Oranges, Reds (default: Blues)
+  -n NAME, --name NAME  Sample name for labeling (default: SAMPLE)
+```
+
+🔗 Please also visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
 
 ## Contributing
 Contributions are welcome! If you have any ideas, bug fixes, or enhancements, feel free to open an issue or submit a pull request.
