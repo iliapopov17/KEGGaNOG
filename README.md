@@ -46,7 +46,7 @@ pip install kegganog
 ## Usage Guide
 
 ```
-usage: KEGGaNOG [-h] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME]
+usage: KEGGaNOG [-h] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME] [--version]
 
 KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization.
 
