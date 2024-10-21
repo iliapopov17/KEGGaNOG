@@ -51,13 +51,21 @@ def parse_emapper(input_file, temp_folder):
 
 
 # Function to run KEGG-Decoder and process the output
-def run_kegg_decoder(input_file, temp_folder):
+def run_kegg_decoder(input_file, temp_folder, sample_name):
     output_file = os.path.join(temp_folder, "output.list")
 
     # Run KEGG-Decoder via subprocess
     subprocess.run(
         ["KEGG-decoder", "-i", input_file, "-o", output_file, "-v", "static"]
     )
+
+    with open(output_file, "r") as file:
+        content = file.read()
+
+    content = content.replace("SAMPLE", f"{sample_name}")
+
+    with open(output_file, "w") as file:
+        file.write(content)
 
     return output_file
 
@@ -76,11 +84,6 @@ def generate_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
 
     # Split into parts for separate heatmaps
     df1, df2, df3 = np.array_split(df, 3)
-
-    # Rename the 'SAMPLE' column to 'Lpb. plantarum IS-10506'
-    df1 = df1.rename(columns={"SAMPLE": rf"{sample_name}"})
-    df2 = df2.rename(columns={"SAMPLE": rf"{sample_name}"})
-    df3 = df3.rename(columns={"SAMPLE": rf"{sample_name}"})
 
     # Create a grid for the heatmap and colorbar
     fig, axes = plt.subplots(1, 3, figsize=(20, 20))
@@ -179,7 +182,7 @@ def main():
     parsed_filtered_file = parse_emapper(args.input, temp_folder)
 
     # Step 2: Run KEGG-Decoder
-    kegg_decoder_file = run_kegg_decoder(parsed_filtered_file, temp_folder)
+    kegg_decoder_file = run_kegg_decoder(parsed_filtered_file, temp_folder, args.name)
 
     # Step 3: Generate the heatmap
     generate_heatmap(kegg_decoder_file, args.output, args.dpi, args.color, args.name)
