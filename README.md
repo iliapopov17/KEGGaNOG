@@ -38,7 +38,12 @@
 That's why `KEGGaNOG` uses this version too
 
 ```bash
+# Linux / WSL / Intel Macs
 conda create -n kegganog python=3.6
+
+# ARM Macs (Apple M1-M4 and so on)
+CONDA_SUBDIR=osx-64 conda create -n kegganog python=3.6
+
 conda activate kegganog
 pip install kegganog
 ```
