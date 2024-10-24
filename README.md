@@ -66,6 +66,7 @@ optional arguments:
                         Cmap for seaborn heatmap. Recommended options: Greys,
                         Purples, Blues, Greens, Oranges, Reds (default: Blues)
   -n NAME, --name NAME  Sample name for labeling (default: SAMPLE)
+  -g, --group           Group the heatmap based on predefined categories
   --version             show program's version number and exit
 ```
 
