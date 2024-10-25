@@ -57,8 +57,11 @@ KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization.
 
 optional arguments:
   -h, --help            show this help message and exit
+  --multi               “Multi” mode allows to run KEGGaNOG on multiple
+                          eggNOG-mapper annotation files (a text file with file
+                          location paths must be passed to the input)
   -i INPUT, --input INPUT
-                        Path to eggnog-mapper output file
+                        Path to eggNOG-mapper output file
   -o OUTPUT, --output OUTPUT
                         Output folder to save results
   -dpi DPI, --dpi DPI   DPI for the output image (default: 300)
