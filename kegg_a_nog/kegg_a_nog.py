@@ -2,16 +2,16 @@ import argparse
 import warnings
 import os
 import shutil
-import data_processing
-import simple_heatmap
-import grouped_heatmap
+from . import data_processing
+from . import simple_heatmap
+from . import grouped_heatmap
 
 warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
 
 # Main function to run the tool
 def main():
-    print("KEGGaNOG v. 0.2.5 by Ilia V. Popov")
+    print("KEGGaNOG by Ilia V. Popov")
     # Set up argument parser
     parser = argparse.ArgumentParser(
         description="KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization."
