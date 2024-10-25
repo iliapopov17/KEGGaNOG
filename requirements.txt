@@ -8,3 +8,4 @@ pyparsing==3.1.4
 scipy==1.3.1
 seaborn==0.9.0
 tanglegram==0.1.0
+tqdm==4.64.1

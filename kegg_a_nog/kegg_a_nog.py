@@ -7,43 +7,264 @@ import argparse
 import re
 import subprocess
 import csv
+from tqdm import tqdm
+import warnings
+
+warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
+
+function_groups = {
+    "Carbon fixation": [
+        "3-Hydroxypropionate Bicycle",
+        "4-Hydroxybutyrate/3-hydroxypropionate",
+        "CBB Cycle",
+        "gluconeogenesis",
+        "rTCA Cycle",
+        "RuBisCo",
+        "Wood-Ljungdahl",
+    ],
+    "Carbohydrate metabolism": [
+        "Entner-Doudoroff Pathway",
+        "glycolysis",
+        "Sulfolipid biosynthesis",
+        "TCA Cycle",
+        "Glyoxylate shunt",
+        "Mixed acid: Acetate",
+        "Mixed acid: Ethanol, Acetate to Acetylaldehyde",
+        "Mixed acid: Ethanol, Acetyl-CoA to Acetylaldehyde (reversible)",
+        "Mixed acid: Ethanol, Acetylaldehyde to Ethanol",
+        "Mixed acid: Formate",
+        "Mixed acid: Formate to CO2 & H2",
+        "Mixed acid: Lactate",
+        "Mixed acid: PEP to Succinate via OAA, malate & fumarate",
+        "alpha-amylase",
+        "polyhydroxybutyrate synthesis",
+        "starch/glycogen degradation",
+        "starch/glycogen synthesis",
+    ],
+    "Carbon degradation": [
+        "beta-glucosidase",
+        "beta-N-acetylhexosaminidase",
+        "chitinase",
+        "D-galacturonate epimerase",
+        "D-galacturonate isomerase",
+        "diacetylchitobiose deacetylase",
+        "glucoamylase",
+        "pullulanase",
+        "DMS dehydrogenase",
+        "DMSP demethylation",
+        "Naphthalene degradation to salicylate",
+        "alcohol oxidase",
+        "basic endochitinase B",
+        "bifunctional chitinase/lysozyme",
+        "cellulase",
+        "dimethylamine/trimethylamine dehydrogenase",
+        "oligogalacturonide lyase",
+        "pectinesterase",
+        "soluble methane monooxygenase",
+    ],
+    "Nitrogen metabolism": [
+        "dissim nitrate reduction",
+        "DNRA",
+        "nitric oxide reduction",
+        "nitrite oxidation",
+        "nitrite reduction",
+        "nitrogen fixation",
+        "nitrous-oxide reduction",
+        "ammonia oxidation (amo/pmmo)",
+        "hydrazine dehydrogenase",
+        "hydrazine synthase",
+        "hydroxylamine oxidation",
+    ],
+    "Sulfur metabolism": [
+        "alt thiosulfate oxidation tsdA",
+        "dissimilatory sulfate < > APS",
+        "dissimilatory sulfite < > APS",
+        "dissimilatory sulfite < > sulfide",
+        "DMSO reductase",
+        "sulfide oxidation",
+        "sulfite dehydrogenase",
+        "sulfite dehydrogenase (quinone)",
+        "sulfur dioxygenase",
+        "thiosulfate oxidation",
+        "thiosulfate/polysulfide reductase",
+        "alt thiosulfate oxidation doxAD",
+        "sulfhydrogenase",
+        "sulfur assimilation",
+        "sulfur disproportionation",
+        "sulfur reductase sreABC",
+    ],
+    "Oxidative phosphorylation": [
+        "Cytochrome bd complex",
+        "Cytochrome c oxidase",
+        "Cytochrome c oxidase, cbb3-type",
+        "F-type ATPase",
+        "Na-NADH-ubiquinone oxidoreductase",
+        "NADH-quinone oxidoreductase",
+        "Ubiquinol-cytochrome c reductase",
+        "V-type ATPase",
+        "Cytochrome aa3-600 menaquinol oxidase",
+        "Cytochrome b6/f complex",
+        "Cytochrome o ubiquinol oxidase",
+        "NAD(P)H-quinone oxidoreductase",
+    ],
+    "Hydrogen redox": [
+        "NAD-reducing hydrogenase",
+        "NiFe hydrogenase Hyd-1",
+        "Coenzyme B/Coenzyme M regeneration",
+        "Coenzyme M reduction to methane",
+        "NADP-reducing hydrogenase",
+        "NiFe hydrogenase",
+        "ferredoxin hydrogenase",
+        "hydrogen:quinone oxidoreductase",
+        "membrane-bound hydrogenase",
+    ],
+    "Amino acid metabolism": [
+        "arginine",
+        "asparagine",
+        "glutamine",
+        "histidine",
+        "lysine",
+        "serine",
+        "threonine",
+        "Serine pathway/formaldehyde assimilation",
+        "alanine",
+        "aspartate",
+        "cysteine",
+        "glutamate",
+        "glycine",
+        "isoleucine",
+        "leucine",
+        "methionine",
+        "phenylalanine",
+        "proline",
+        "tryptophan",
+        "tyrosine",
+        "valine",
+    ],
+    "Vitamin biosynthesis": [
+        "cobalamin biosynthesis",
+        "riboflavin biosynthesis",
+        "thiamin biosynthesis",
+        "MEP-DOXP pathway",
+        "Retinal biosynthesis",
+        "Retinal from apo-carotenals",
+        "carotenoids backbone biosynthesis",
+        "end-product astaxanthin",
+        "end-product myxoxanthophylls",
+        "end-product nostoxanthin",
+        "end-product zeaxanthin diglucoside",
+        "mevalonate pathway",
+    ],
+    "Cell mobility": ["Chemotaxis", "Flagellum", "Adhesion"],
+    "Biofilm formation": [
+        "Biofilm PGA Synthesis protein",
+        "Biofilm regulator BssS",
+        "Colanic acid and Biofilm protein A",
+        "Colanic acid and Biofilm transcriptional regulator",
+        "Curli fimbriae biosynthesis",
+    ],
+    "Bacterial secretion systems": [
+        "Sec-SRP",
+        "Twin Arginine Targeting",
+        "Type I Secretion",
+        "Type II Secretion",
+        "Type III Secretion",
+        "Type IV Secretion",
+        "Type Vabc Secretion",
+        "Type VI Secretion",
+    ],
+    "Transporters": [
+        "transporter: phosphate",
+        "transporter: phosphonate",
+        "transporter: thiamin",
+        "transporter: urea",
+        "C-P lyase cleavage PhnJ",
+        "CP-lyase complex",
+        "CP-lyase operon",
+        "bidirectional polyphosphate",
+        "transporter: vitamin B12",
+    ],
+    "Metal transporters": [
+        "Cobalt transporter CbiMQ",
+        "Cobalt transporter CorA",
+        "Copper transporter CopA",
+        "Fe-Mn transporter MntH",
+        "Ferric iron ABC-type substrate-binding AfuA",
+        "Ferrous iron transporter FeoB",
+        "Cobalt transporter CbtA",
+        "Nickel ABC-type substrate-binding NikA",
+    ],
+    "Arsenic reduction": ["Arsenic reduction"],
+    "Methanogenesis": [
+        "Methanogenesis via CO2",
+        "Methanogenesis via acetate",
+        "Methanogenesis via dimethylamine",
+        "Methanogenesis via dimethylsulfide, methanethiol, methylpropanoate",
+        "Methanogenesis via methanol",
+        "Methanogenesis via methylamine",
+        "Methanogenesis via trimethylamine",
+    ],
+    "Photosynthesis": [
+        "Photosystem I",
+        "Photosystem II",
+        "anoxygenic type-I reaction center",
+        "anoxygenic type-II reaction center",
+    ],
+    "Genetic competence": [
+        "Competence factors",
+        "Competence-related core components",
+        "Competence-related related components",
+    ],
+    "Miscellaneous": [
+        "Soluble methane monooxygenase",
+        "Naphthalene degradation to salicylate",
+        "alcohol oxidase",
+        "DMS dehydrogenase",
+        "ferredoxin hydrogenase",
+    ],
+}
 
 
 # Function to parse eggnog-mapper output and prepare for KEGG-Decoder
 def parse_emapper(input_file, temp_folder):
-    # Read the input file
-    df_filtered = pd.read_csv(input_file, sep="\t", skiprows=4)
+    print("Parsing eggnog-mapper output...")
 
-    # Extract the 'KEGG_ko' column and clean it up
+    # Read the input file with progress bar
+    with tqdm(total=1, desc="Reading eggnog-mapper file") as pbar:
+        df_filtered = pd.read_csv(input_file, sep="\t", skiprows=4)
+        pbar.update(1)
+
+    # Filter the 'KEGG_ko' column
     df_kegg_ko = df_filtered[["KEGG_ko"]]
     df_kegg_ko = df_kegg_ko[df_kegg_ko["KEGG_ko"] != "-"]
 
-    # Format the 'KEGG_ko' column for KEGG-Decoder
-    df_kegg_ko["KEGG_ko"] = df_kegg_ko["KEGG_ko"].str.replace(
-        r"ko:(K\d+)", r"SAMPLE \1", regex=True
-    )
-    df_kegg_ko["KEGG_ko"] = df_kegg_ko["KEGG_ko"].str.replace(",", "\n")
+    # Format 'KEGG_ko' column for KEGG-Decoder
+    with tqdm(total=1, desc="Formatting KEGG_ko column") as pbar:
+        df_kegg_ko["KEGG_ko"] = df_kegg_ko["KEGG_ko"].str.replace(
+            r"ko:(K\d+)", r"SAMPLE \1", regex=True
+        )
+        df_kegg_ko["KEGG_ko"] = df_kegg_ko["KEGG_ko"].str.replace(",", "\n")
+        pbar.update(1)
 
-    # Save the parsed file with potential quotes
+    # Save the parsed file
     parsed_file = os.path.join(temp_folder, "parsed.txt")
-    df_kegg_ko.to_csv(
-        parsed_file,
-        sep="\t",
-        index=False,
-        header=False,
-        quoting=csv.QUOTE_MINIMAL,
-        escapechar="\\",
-    )
+    with tqdm(total=1, desc="Saving parsed file") as pbar:
+        df_kegg_ko.to_csv(
+            parsed_file,
+            sep="\t",
+            index=False,
+            header=False,
+            quoting=csv.QUOTE_MINIMAL,
+            escapechar="\\",
+        )
+        pbar.update(1)
 
     # Remove all quotation marks from the parsed file
     parsed_filtered_file = os.path.join(temp_folder, "parsed_filtered.txt")
     with open(parsed_file, "r") as file:
         content = file.read()
 
-    # Replace any quotation marks
     content = content.replace('"', "")
-
-    # Write the cleaned content to the parsed_filtered.txt file
     with open(parsed_filtered_file, "w") as file:
         file.write(content)
 
@@ -52,12 +273,16 @@ def parse_emapper(input_file, temp_folder):
 
 # Function to run KEGG-Decoder and process the output
 def run_kegg_decoder(input_file, temp_folder, sample_name):
+    print("Running KEGG-Decoder...")
+
     output_file = os.path.join(temp_folder, "output.list")
 
-    # Run KEGG-Decoder via subprocess
-    subprocess.run(
-        ["KEGG-decoder", "-i", input_file, "-o", output_file, "-v", "static"]
-    )
+    # Run KEGG-Decoder via subprocess with progress bar
+    with tqdm(total=1, desc="Executing KEGG-Decoder") as pbar:
+        subprocess.run(
+            ["KEGG-decoder", "-i", input_file, "-o", output_file, "-v", "static"]
+        )
+        pbar.update(1)
 
     with open(output_file, "r") as file:
         content = file.read()
@@ -72,59 +297,63 @@ def run_kegg_decoder(input_file, temp_folder, sample_name):
 
 # Function to generate the heatmap
 def generate_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
+    print("Generating heatmap...")
+
     # Read the KEGG-Decoder output
     with open(kegg_decoder_file, "r") as file:
         lines = file.readlines()
 
-    # Prepare the dataframe
-    header = lines[0].strip().split("\t")
-    values = lines[1].strip().split("\t")
-    data = {"Function": header[1:], sample_name: [float(v) for v in values[1:]]}
-    df = pd.DataFrame(data)
+    # Process data for heatmap with progress bar
+    with tqdm(total=3, desc="Preparing heatmap data") as pbar:
+        header = lines[0].strip().split("\t")
+        values = lines[1].strip().split("\t")
+        data = {"Function": header[1:], sample_name: [float(v) for v in values[1:]]}
+        df = pd.DataFrame(data)
+        pbar.update(1)
 
-    # Split into parts for separate heatmaps
-    df1, df2, df3 = np.array_split(df, 3)
+        # Split into three parts for separate heatmaps
+        df1, df2, df3 = np.array_split(df, 3)
+        pbar.update(2)
 
     # Create a grid for the heatmap and colorbar
     fig, axes = plt.subplots(1, 3, figsize=(20, 20))
     cbar_ax = fig.add_axes([0.92, 0.4, 0.02, 0.2])  # Colorbar axis on the right
 
-    # Plot each part
-    sns.heatmap(
-        df1.pivot_table(values=sample_name, index="Function", fill_value=0),
-        cmap=f"{color}",
-        annot=True,
-        linewidths=0.5,
-        ax=axes[0],
-        cbar=False,
-    )
-    axes[0].set_title("Part 1")
+    with tqdm(total=3, desc="Creating heatmap parts") as pbar:
+        sns.heatmap(
+            df1.pivot_table(values=sample_name, index="Function", fill_value=0),
+            cmap=f"{color}",
+            annot=True,
+            linewidths=0.5,
+            ax=axes[0],
+            cbar=False,
+        )
+        axes[0].set_title("Part 1")
+        pbar.update(1)
 
-    sns.heatmap(
-        df2.pivot_table(values=sample_name, index="Function", fill_value=0),
-        cmap=f"{color}",
-        annot=True,
-        linewidths=0.5,
-        ax=axes[1],
-        cbar=False,
-    )
-    axes[1].set_title("Part 2")
+        sns.heatmap(
+            df2.pivot_table(values=sample_name, index="Function", fill_value=0),
+            cmap=f"{color}",
+            annot=True,
+            linewidths=0.5,
+            ax=axes[1],
+            cbar=False,
+        )
+        axes[1].set_title("Part 2")
+        pbar.update(1)
 
-    sns.heatmap(
-        df3.pivot_table(values=sample_name, index="Function", fill_value=0),
-        cmap=f"{color}",
-        annot=True,
-        linewidths=0.5,
-        ax=axes[2],
-        cbar_ax=cbar_ax,
-        cbar_kws={"label": "Pathway completeness"},
-    )
-    axes[2].set_title("Part 3")
+        sns.heatmap(
+            df3.pivot_table(values=sample_name, index="Function", fill_value=0),
+            cmap=f"{color}",
+            annot=True,
+            linewidths=0.5,
+            ax=axes[2],
+            cbar_ax=cbar_ax,
+            cbar_kws={"label": "Pathway completeness"},
+        )
+        axes[2].set_title("Part 3")
+        pbar.update(1)
 
-    axes[1].set_ylabel("")
-    axes[2].set_ylabel("")
-
-    # Set layout and save the figure
     plt.tight_layout(rect=[0, 0, 0.9, 1])
     output_file = os.path.join(output_folder, "heatmap_figure.png")
     plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
@@ -133,309 +362,112 @@ def generate_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
 
 # Function to generate groupped heatmap
 def generate_grouped_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
+    print("Generating groupped heatmap...")
+
     # Read the KEGG-Decoder output
     with open(kegg_decoder_file, "r") as file:
         lines = file.readlines()
 
     # Prepare the dataframe
-    header = lines[0].strip().split("\t")
-    values = lines[1].strip().split("\t")
-    data = {"Function": header[1:], sample_name: [float(v) for v in values[1:]]}
-    df = pd.DataFrame(data)
+    with tqdm(total=4, desc="Preparing heatmap data") as pbar:
+        header = lines[0].strip().split("\t")
+        values = lines[1].strip().split("\t")
+        data = {"Function": header[1:], sample_name: [float(v) for v in values[1:]]}
+        df = pd.DataFrame(data)
+        pbar.update(1)
 
-    function_groups = {
-        "Carbon fixation": [
-            "3-Hydroxypropionate Bicycle",
-            "4-Hydroxybutyrate/3-hydroxypropionate",
-            "CBB Cycle",
-            "gluconeogenesis",
-            "rTCA Cycle",
-            "RuBisCo",
-            "Wood-Ljungdahl",
-        ],
-        "Carbohydrate metabolism": [
-            "Entner-Doudoroff Pathway",
-            "glycolysis",
-            "Sulfolipid biosynthesis",
-            "TCA Cycle",
-            "Glyoxylate shunt",
-            "Mixed acid: Acetate",
-            "Mixed acid: Ethanol, Acetate to Acetylaldehyde",
-            "Mixed acid: Ethanol, Acetyl-CoA to Acetylaldehyde (reversible)",
-            "Mixed acid: Ethanol, Acetylaldehyde to Ethanol",
-            "Mixed acid: Formate",
-            "Mixed acid: Formate to CO2 & H2",
-            "Mixed acid: Lactate",
-            "Mixed acid: PEP to Succinate via OAA, malate & fumarate",
-            "alpha-amylase",
-            "polyhydroxybutyrate synthesis",
-            "starch/glycogen degradation",
-            "starch/glycogen synthesis",
-        ],
-        "Carbon degradation": [
-            "beta-glucosidase",
-            "beta-N-acetylhexosaminidase",
-            "chitinase",
-            "D-galacturonate epimerase",
-            "D-galacturonate isomerase",
-            "diacetylchitobiose deacetylase",
-            "glucoamylase",
-            "pullulanase",
-            "DMS dehydrogenase",
-            "DMSP demethylation",
-            "Naphthalene degradation to salicylate",
-            "alcohol oxidase",
-            "basic endochitinase B",
-            "bifunctional chitinase/lysozyme",
-            "cellulase",
-            "dimethylamine/trimethylamine dehydrogenase",
-            "oligogalacturonide lyase",
-            "pectinesterase",
-            "soluble methane monooxygenase",
-        ],
-        "Nitrogen metabolism": [
-            "dissim nitrate reduction",
-            "DNRA",
-            "nitric oxide reduction",
-            "nitrite oxidation",
-            "nitrite reduction",
-            "nitrogen fixation",
-            "nitrous-oxide reduction",
-            "ammonia oxidation (amo/pmmo)",
-            "hydrazine dehydrogenase",
-            "hydrazine synthase",
-            "hydroxylamine oxidation",
-        ],
-        "Sulfur metabolism": [
-            "alt thiosulfate oxidation tsdA",
-            "dissimilatory sulfate < > APS",
-            "dissimilatory sulfite < > APS",
-            "dissimilatory sulfite < > sulfide",
-            "DMSO reductase",
-            "sulfide oxidation",
-            "sulfite dehydrogenase",
-            "sulfite dehydrogenase (quinone)",
-            "sulfur dioxygenase",
-            "thiosulfate oxidation",
-            "thiosulfate/polysulfide reductase",
-            "alt thiosulfate oxidation doxAD",
-            "sulfhydrogenase",
-            "sulfur assimilation",
-            "sulfur disproportionation",
-            "sulfur reductase sreABC",
-        ],
-        "Oxidative phosphorylation": [
-            "Cytochrome bd complex",
-            "Cytochrome c oxidase",
-            "Cytochrome c oxidase, cbb3-type",
-            "F-type ATPase",
-            "Na-NADH-ubiquinone oxidoreductase",
-            "NADH-quinone oxidoreductase",
-            "Ubiquinol-cytochrome c reductase",
-            "V-type ATPase",
-            "Cytochrome aa3-600 menaquinol oxidase",
-            "Cytochrome b6/f complex",
-            "Cytochrome o ubiquinol oxidase",
-            "NAD(P)H-quinone oxidoreductase",
-        ],
-        "Hydrogen redox": [
-            "NAD-reducing hydrogenase",
-            "NiFe hydrogenase Hyd-1",
-            "Coenzyme B/Coenzyme M regeneration",
-            "Coenzyme M reduction to methane",
-            "NADP-reducing hydrogenase",
-            "NiFe hydrogenase",
-            "ferredoxin hydrogenase",
-            "hydrogen:quinone oxidoreductase",
-            "membrane-bound hydrogenase",
-        ],
-        "Amino acid metabolism": [
-            "arginine",
-            "asparagine",
-            "glutamine",
-            "histidine",
-            "lysine",
-            "serine",
-            "threonine",
-            "Serine pathway/formaldehyde assimilation",
-            "alanine",
-            "aspartate",
-            "cysteine",
-            "glutamate",
-            "glycine",
-            "isoleucine",
-            "leucine",
-            "methionine",
-            "phenylalanine",
-            "proline",
-            "tryptophan",
-            "tyrosine",
-            "valine",
-        ],
-        "Vitamin biosynthesis": [
-            "cobalamin biosynthesis",
-            "riboflavin biosynthesis",
-            "thiamin biosynthesis",
-            "MEP-DOXP pathway",
-            "Retinal biosynthesis",
-            "Retinal from apo-carotenals",
-            "carotenoids backbone biosynthesis",
-            "end-product astaxanthin",
-            "end-product myxoxanthophylls",
-            "end-product nostoxanthin",
-            "end-product zeaxanthin diglucoside",
-            "mevalonate pathway",
-        ],
-        "Cell mobility": ["Chemotaxis", "Flagellum", "Adhesion"],
-        "Biofilm formation": [
-            "Biofilm PGA Synthesis protein",
-            "Biofilm regulator BssS",
-            "Colanic acid and Biofilm protein A",
-            "Colanic acid and Biofilm transcriptional regulator",
-            "Curli fimbriae biosynthesis",
-        ],
-        "Bacterial secretion systems": [
-            "Sec-SRP",
-            "Twin Arginine Targeting",
-            "Type I Secretion",
-            "Type II Secretion",
-            "Type III Secretion",
-            "Type IV Secretion",
-            "Type Vabc Secretion",
-            "Type VI Secretion",
-        ],
-        "Transporters": [
-            "transporter: phosphate",
-            "transporter: phosphonate",
-            "transporter: thiamin",
-            "transporter: urea",
-            "C-P lyase cleavage PhnJ",
-            "CP-lyase complex",
-            "CP-lyase operon",
-            "bidirectional polyphosphate",
-            "transporter: vitamin B12",
-        ],
-        "Metal transporters": [
-            "Cobalt transporter CbiMQ",
-            "Cobalt transporter CorA",
-            "Copper transporter CopA",
-            "Fe-Mn transporter MntH",
-            "Ferric iron ABC-type substrate-binding AfuA",
-            "Ferrous iron transporter FeoB",
-            "Cobalt transporter CbtA",
-            "Nickel ABC-type substrate-binding NikA",
-        ],
-        "Arsenic reduction": ["Arsenic reduction"],
-        "Methanogenesis": [
-            "Methanogenesis via CO2",
-            "Methanogenesis via acetate",
-            "Methanogenesis via dimethylamine",
-            "Methanogenesis via dimethylsulfide, methanethiol, methylpropanoate",
-            "Methanogenesis via methanol",
-            "Methanogenesis via methylamine",
-            "Methanogenesis via trimethylamine",
-        ],
-        "Photosynthesis": [
-            "Photosystem I",
-            "Photosystem II",
-            "anoxygenic type-I reaction center",
-            "anoxygenic type-II reaction center",
-        ],
-        "Genetic competence": [
-            "Competence factors",
-            "Competence-related core components",
-            "Competence-related related components",
-        ],
-        "Miscellaneous": [
-            "Soluble methane monooxygenase",
-            "Naphthalene degradation to salicylate",
-            "alcohol oxidase",
-            "DMS dehydrogenase",
-            "ferredoxin hydrogenase",
-        ],
-    }
-
-    df["Group"] = df["Function"].apply(
-        lambda x: next(
-            (group for group, funcs in function_groups.items() if x in funcs),
-            "Miscellaneous",
+        df["Group"] = df["Function"].apply(
+            lambda x: next(
+                (group for group, funcs in function_groups.items() if x in funcs),
+                "Miscellaneous",
+            )
         )
-    )
 
-    df = df.sort_values(by=["Group", "Function"]).reset_index(drop=True)
+        df = df.sort_values(by=["Group", "Function"]).reset_index(drop=True)
 
-    df["Function"] = pd.Categorical(
-        df["Function"], categories=df["Function"], ordered=True
-    )
+        df["Function"] = pd.Categorical(
+            df["Function"], categories=df["Function"], ordered=True
+        )
 
-    # Define the group ranges for each part
-    part1_groups = [
-        "Amino acid metabolism",
-        "Arsenic reduction",
-        "Bacterial secretion systems",
-        "Biofilm formation",
-        "Carbohydrate metabolism",
-        "Photosynthesis",
-    ]
-    part2_groups = [
-        "Carbon degradation",
-        "Carbon fixation",
-        "Cell mobility",
-        "Genetic competence",
-        "Hydrogen redox",
-        "Metal transporters",
-        "Methanogenesis",
-        "Miscellaneous",
-    ]
-    part3_groups = [
-        "Nitrogen metabolism",
-        "Oxidative phosphorylation",
-        "Sulfur metabolism",
-        "Transporters",
-        "Vitamin biosynthesis",
-    ]
+        # Define the group ranges for each part
+        part1_groups = [
+            "Amino acid metabolism",
+            "Arsenic reduction",
+            "Bacterial secretion systems",
+            "Biofilm formation",
+            "Carbohydrate metabolism",
+            "Photosynthesis",
+        ]
+        part2_groups = [
+            "Carbon degradation",
+            "Carbon fixation",
+            "Cell mobility",
+            "Genetic competence",
+            "Hydrogen redox",
+            "Metal transporters",
+            "Methanogenesis",
+            "Miscellaneous",
+        ]
+        part3_groups = [
+            "Nitrogen metabolism",
+            "Oxidative phosphorylation",
+            "Sulfur metabolism",
+            "Transporters",
+            "Vitamin biosynthesis",
+        ]
 
-    # Split the dataframe into 3 parts based on the groupings
-    part1 = df[df["Group"].isin(part1_groups)].reset_index(drop=True)
-    part2 = df[df["Group"].isin(part2_groups)].reset_index(drop=True)
-    part3 = df[df["Group"].isin(part3_groups)].reset_index(drop=True)
+        # Split the dataframe into 3 parts based on the groupings
+        part1 = df[df["Group"].isin(part1_groups)].reset_index(drop=True)
+        pbar.update(1)
+        part2 = df[df["Group"].isin(part2_groups)].reset_index(drop=True)
+        pbar.update(1)
+        part3 = df[df["Group"].isin(part3_groups)].reset_index(drop=True)
+        pbar.update(1)
 
     # Function to add empty rows between groups
-    def add_empty_rows(df, groups):
-        new_rows = []
-        for group in groups:
-            group_rows = df[df["Group"] == group]
-            new_rows.append(group_rows)
-            # Add an empty row if this is not the last group
-            if group != groups[-1]:
-                # Create an empty row with 'split' in the 'Function' column
-                empty_row = pd.DataFrame(
-                    [["split_" + f"{group}"] + [np.nan] * (df.shape[1] - 1)],
-                    columns=df.columns,
-                )  # First column is 'Function'
-                # empty_row['Group'] = 'split'  # Set the group to 'split'
-                new_rows.append(empty_row)  # Append the empty row
-        return pd.concat(new_rows, ignore_index=True)
+    with tqdm(total=6, desc="Adding split between groups") as pbar:
 
-    part1 = add_empty_rows(
-        df[df["Group"].isin(part1_groups)], part1_groups
-    ).reset_index(drop=True)
-    part2 = add_empty_rows(
-        df[df["Group"].isin(part2_groups)], part2_groups
-    ).reset_index(drop=True)
-    part3 = add_empty_rows(
-        df[df["Group"].isin(part3_groups)], part3_groups
-    ).reset_index(drop=True)
+        def add_empty_rows(df, groups):
+            new_rows = []
+            for group in groups:
+                group_rows = df[df["Group"] == group]
+                new_rows.append(group_rows)
+                # Add an empty row if this is not the last group
+                if group != groups[-1]:
+                    # Create an empty row with 'split' in the 'Function' column
+                    empty_row = pd.DataFrame(
+                        [["split_" + f"{group}"] + [np.nan] * (df.shape[1] - 1)],
+                        columns=df.columns,
+                    )  # First column is 'Function'
+                    # empty_row['Group'] = 'split'  # Set the group to 'split'
+                    new_rows.append(empty_row)  # Append the empty row
+            return pd.concat(new_rows, ignore_index=True)
 
-    part1["Function"] = pd.Categorical(
-        part1["Function"], categories=part1["Function"], ordered=True
-    )
-    part2["Function"] = pd.Categorical(
-        part2["Function"], categories=part2["Function"], ordered=True
-    )
-    part3["Function"] = pd.Categorical(
-        part3["Function"], categories=part3["Function"], ordered=True
-    )
+        part1 = add_empty_rows(
+            df[df["Group"].isin(part1_groups)], part1_groups
+        ).reset_index(drop=True)
+        pbar.update(1)
+        part2 = add_empty_rows(
+            df[df["Group"].isin(part2_groups)], part2_groups
+        ).reset_index(drop=True)
+        pbar.update(1)
+        part3 = add_empty_rows(
+            df[df["Group"].isin(part3_groups)], part3_groups
+        ).reset_index(drop=True)
+        pbar.update(1)
+
+        part1["Function"] = pd.Categorical(
+            part1["Function"], categories=part1["Function"], ordered=True
+        )
+        pbar.update(1)
+        part2["Function"] = pd.Categorical(
+            part2["Function"], categories=part2["Function"], ordered=True
+        )
+        pbar.update(1)
+        part3["Function"] = pd.Categorical(
+            part3["Function"], categories=part3["Function"], ordered=True
+        )
+        pbar.update(1)
 
     # Create heatmaps for each part
     fig, axes = plt.subplots(
@@ -515,39 +547,44 @@ def generate_grouped_heatmap(kegg_decoder_file, output_folder, dpi, color, sampl
                 tick.tick1line.set_visible(False)  # Hide major tick mark
                 tick.tick2line.set_visible(False)  # Hide minor tick mark
 
-    # Plot for Part 1
-    plot_heatmap(part1, part1_groups, axes[0], cbar=False)
-    axes[0].set_title("Part 1")
+    with tqdm(total=3, desc="Creating heatmap parts") as pbar:
+        # Plot for Part 1
+        plot_heatmap(part1, part1_groups, axes[0], cbar=False)
+        axes[0].set_title("Part 1")
+        pbar.update(1)
 
-    # Plot for Part 2
-    plot_heatmap(part2, part2_groups, axes[1], cbar=False)
-    axes[1].set_title("Part 2")
+        # Plot for Part 2
+        plot_heatmap(part2, part2_groups, axes[1], cbar=False)
+        axes[1].set_title("Part 2")
+        pbar.update(1)
 
-    # Plot for Part 3
-    plot_heatmap(part3, part3_groups, axes[2], cbar=True, cbar_ax=cbar_ax)
-    axes[2].set_title("Part 3")
+        # Plot for Part 3
+        plot_heatmap(part3, part3_groups, axes[2], cbar=True, cbar_ax=cbar_ax)
+        axes[2].set_title("Part 3")
+        pbar.update(1)
 
-    # Y-axis labels adjustments
-    axes[0].set_ylabel("")
-    axes[1].set_ylabel("")
-    axes[2].set_ylabel("")
+        # Y-axis labels adjustments
+        axes[0].set_ylabel("")
+        axes[1].set_ylabel("")
+        axes[2].set_ylabel("")
 
-    # Adjusting function labels to the right
-    for ax in axes:
-        ax.yaxis.tick_right()  # Move y-ticks to the right
-        ax.set_yticklabels(
-            ax.get_yticklabels(), rotation=0, va="center", ha="left"
-        )  # Align labels
+        # Adjusting function labels to the right
+        for ax in axes:
+            ax.yaxis.tick_right()  # Move y-ticks to the right
+            ax.set_yticklabels(
+                ax.get_yticklabels(), rotation=0, va="center", ha="left"
+            )  # Align labels
 
-    # Layout adjustments
-    plt.tight_layout(rect=[0, 0, 0.9, 1])
-    output_file = os.path.join(output_folder, "heatmap_figure.png")
-    plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
-    plt.show()
+        # Layout adjustments
+        plt.tight_layout(rect=[0, 0, 0.9, 1])
+        output_file = os.path.join(output_folder, "heatmap_figure.png")
+        plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
+        plt.show()
 
 
 # Main function to run the tool
 def main():
+    print("KEGGaNOG v. 0.2.1 by Ilia V. Popov")
     # Set up argument parser
     parser = argparse.ArgumentParser(
         description="KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization."
@@ -590,7 +627,7 @@ def main():
         action="store_true",
         help="Group the heatmap based on predefined categories",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 0.2.0")
+    parser.add_argument("--version", action="version", version="%(prog)s 0.2.1")
 
     args = parser.parse_args()
 
