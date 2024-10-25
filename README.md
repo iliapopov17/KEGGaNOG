@@ -35,23 +35,33 @@
 
 `KEGG-Decoder` is hardwired into `KEGGaNOG`<br>
 `KEGG-Decoder` uses `python=3.6`<br>
-That's why `KEGGaNOG` uses this version too
+That's why `KEGGaNOG` uses this version too<br>
+There are some compatibility issues, yet they are managed (however, installing `KEGGaNOG` on macOS is a bit not standart)
 
 ```bash
 # Linux / WSL / Intel Macs
 conda create -n kegganog python=3.6
-
-# ARM Macs (Apple M1-M4 and so on)
-CONDA_SUBDIR=osx-64 conda create -n kegganog python=3.6
-
 conda activate kegganog
 pip install kegganog
+```
+
+```bash
+# ARM Macs (Apple M1-M4 and so on)
+CONDA_SUBDIR=osx-64 conda create -n kegganog python=3.6 python.app
+conda activate kegganog
+pip install kegganog
+alias KEGGaNOG="pythonw $(which KEGGaNOG)"
+
+# In case user needs to unalias KEGGaNOG from pythonw
+unalias KEGGaNOG
+# To check if KEGGaNOG uses python or pythonw
+which KEGGaNOG
 ```
 
 ## Usage Guide
 
 ```
-usage: KEGGaNOG [-h] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME] [-g] [--version]
+usage: KEGGaNOG [-h] [--multi] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME] [-g] [--version]
 
 KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization.
 
