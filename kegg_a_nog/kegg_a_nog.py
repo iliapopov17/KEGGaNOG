@@ -5,6 +5,7 @@ import shutil
 from . import data_processing
 from . import simple_heatmap
 from . import grouped_heatmap
+from . import kegg_a_nog_multi
 
 warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
@@ -14,13 +15,18 @@ def main():
     print("KEGGaNOG by Ilia V. Popov")
     # Set up argument parser
     parser = argparse.ArgumentParser(
-        description="KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization."
+        description="KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization."
+    )
+    parser.add_argument(
+        "--multi",
+        action="store_true",
+        help="“Multi” mode allows to run KEGGaNOG on multiple eggNOG-mapper annotation files (a text file with file location paths must be passed to the input)",
     )
     parser.add_argument(
         "-i",
         "--input",
         required=True,
-        help="Path to eggnog-mapper output file",
+        help="Path to eggNOG-mapper annotation file",
     )
     parser.add_argument(
         "-o",
@@ -46,7 +52,7 @@ def main():
         "-n",
         "--name",
         default="SAMPLE",
-        help="Sample name for labeling (default: SAMPLE)",
+        help="Sample name for labeling (default: SAMPLE) (not active in `--multi` mode)",
     )
     parser.add_argument(
         "-g",
@@ -54,7 +60,8 @@ def main():
         action="store_true",
         help="Group the heatmap based on predefined categories",
     )
-    parser.add_argument("--version", action="version", version="%(prog)s 0.2.5")
+
+    parser.add_argument("--version", action="version", version="%(prog)s 0.5.0")
 
     args = parser.parse_args()
 
@@ -63,28 +70,32 @@ def main():
     temp_folder = os.path.join(args.output, "temp_files")
     os.makedirs(temp_folder, exist_ok=True)
 
-    # Step 1: Parse eggnog-mapper output
-    parsed_filtered_file = data_processing.parse_emapper(args.input, temp_folder)
-
-    # Step 2: Run KEGG-Decoder
-    kegg_decoder_file = data_processing.run_kegg_decoder(
-        parsed_filtered_file, temp_folder, args.name
-    )
-
-    # Step 3: Generate the heatmap
-
-    if args.group:
-        # Define group labels, for simplicity let's assume you have them in your dataset
-        grouped_heatmap.generate_grouped_heatmap(
-            kegg_decoder_file, args.output, args.dpi, args.color, args.name
-        )
+    if args.multi:
+        kegg_a_nog_multi.main()
     else:
-        # Otherwise, generate a normal heatmap
-        simple_heatmap.generate_heatmap(
-            kegg_decoder_file, args.output, args.dpi, args.color, args.name
+
+        # Step 1: Parse eggNOG-mapper output
+        parsed_filtered_file = data_processing.parse_emapper(args.input, temp_folder)
+
+        # Step 2: Run KEGG-Decoder
+        kegg_decoder_file = data_processing.run_kegg_decoder(
+            parsed_filtered_file, temp_folder, args.name
         )
 
-    print(f"Heatmap saved in {args.output}/heatmap_figure.png")
+        # Step 3: Generate the heatmap
+
+        if args.group:
+            # Define group labels, for simplicity let's assume you have them in your dataset
+            grouped_heatmap.generate_grouped_heatmap(
+                kegg_decoder_file, args.output, args.dpi, args.color, args.name
+            )
+        else:
+            # Otherwise, generate a normal heatmap
+            simple_heatmap.generate_heatmap(
+                kegg_decoder_file, args.output, args.dpi, args.color, args.name
+            )
+
+        print(f"Heatmap saved in {args.output}/heatmap_figure.png")
 
 
 def clean_pycache(dir_path):
