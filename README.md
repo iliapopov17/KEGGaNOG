@@ -63,22 +63,23 @@ which KEGGaNOG
 ```
 usage: KEGGaNOG [-h] [--multi] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME] [-g] [--version]
 
-KEGGaNOG: Link eggnog-mapper and KEGG-Decoder for pathway visualization.
+KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.
 
 optional arguments:
   -h, --help            show this help message and exit
   --multi               “Multi” mode allows to run KEGGaNOG on multiple
-                          eggNOG-mapper annotation files (a text file with file
-                          location paths must be passed to the input)
+                        eggNOG-mapper annotation files (a text file with file
+                        location paths must be passed to the input)
   -i INPUT, --input INPUT
-                        Path to eggNOG-mapper output file
+                        Path to eggNOG-mapper annotation file
   -o OUTPUT, --output OUTPUT
                         Output folder to save results
   -dpi DPI, --dpi DPI   DPI for the output image (default: 300)
   -c COLOR, --color COLOR, --colour COLOR
                         Cmap for seaborn heatmap. Recommended options: Greys,
                         Purples, Blues, Greens, Oranges, Reds (default: Blues)
-  -n NAME, --name NAME  Sample name for labeling (default: SAMPLE) (not active in `--multi` mode)
+  -n NAME, --name NAME  Sample name for labeling (default: SAMPLE) (not active
+                        in `--multi` mode)
   -g, --group           Group the heatmap based on predefined categories
   --version             show program's version number and exit
 ```
