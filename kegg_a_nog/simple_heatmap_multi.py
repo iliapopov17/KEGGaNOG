@@ -71,5 +71,7 @@ def generate_heatmap_multi(kegg_decoder_file, output_folder, dpi, color):
 
     plt.tight_layout(rect=[0, 0, 0.9, 1])
     output_file = os.path.join(output_folder, "heatmap_figure.png")
-    plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
+    with tqdm(total=1, desc="Saving plot") as pbar:
+        plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
+        pbar.update(1)
     plt.show()
