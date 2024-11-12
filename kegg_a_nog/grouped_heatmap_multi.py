@@ -120,7 +120,7 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
 
     fig_w = 0.5 * (part1.shape[1] - 2) + 27.5
     left_pad = (
-        0.15 - 0.0020833 * (part1.shape[1] - 2) + 0.0020833 * (part1.shape[1] - 2) ** 2
+        0.20 - 0.0020833 * (part1.shape[1] - 2) + 0.0020833 * (part1.shape[1] - 2) ** 2
     )
 
     # Create heatmaps for each part
@@ -230,5 +230,7 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
     # Layout adjustments
     plt.tight_layout(rect=[0, 0, 0.9, 1])
     output_file = os.path.join(output_folder, "heatmap_figure.png")
-    plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
+    with tqdm(total=1, desc="Saving plot") as pbar:
+        plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
+        pbar.update(1)
     plt.show()
