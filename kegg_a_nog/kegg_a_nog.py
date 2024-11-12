@@ -60,8 +60,7 @@ def main():
         action="store_true",
         help="Group the heatmap based on predefined categories",
     )
-
-    parser.add_argument("--version", action="version", version="%(prog)s 0.5.0")
+    parser.add_argument("-V", "--version", action="version", version="%(prog)s 0.5.0")
 
     args = parser.parse_args()
 
