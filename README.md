@@ -61,13 +61,14 @@ which KEGGaNOG
 ## Usage Guide
 
 ```
-usage: KEGGaNOG [-h] [--multi] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME] [-g] [--version]
+usage: KEGGaNOG [-h] [-M] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME]
+                [-g] [-V]
 
 KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.
 
 optional arguments:
   -h, --help            show this help message and exit
-  --multi               “Multi” mode allows to run KEGGaNOG on multiple
+  -M, --multi           “Multi” mode allows to run KEGGaNOG on multiple
                         eggNOG-mapper annotation files (a text file with file
                         location paths must be passed to the input)
   -i INPUT, --input INPUT
@@ -81,7 +82,7 @@ optional arguments:
   -n NAME, --name NAME  Sample name for labeling (default: SAMPLE) (not active
                         in `--multi` mode)
   -g, --group           Group the heatmap based on predefined categories
-  --version             show program's version number and exit
+  -V, --version         show program's version number and exit
 ```
 
 🔗 Please also visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
