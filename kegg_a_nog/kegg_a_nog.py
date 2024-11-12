@@ -6,6 +6,7 @@ from . import data_processing
 from . import simple_heatmap
 from . import grouped_heatmap
 from . import kegg_a_nog_multi
+from kegg_a_nog import __version__
 
 warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
@@ -18,6 +19,7 @@ def main():
         description="KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization."
     )
     parser.add_argument(
+        "-M",
         "--multi",
         action="store_true",
         help="“Multi” mode allows to run KEGGaNOG on multiple eggNOG-mapper annotation files (a text file with file location paths must be passed to the input)",
@@ -60,7 +62,9 @@ def main():
         action="store_true",
         help="Group the heatmap based on predefined categories",
     )
-    parser.add_argument("-V", "--version", action="version", version="%(prog)s 0.5.0")
+    parser.add_argument(
+        "-V", "--version", action="version", version=f"%(prog)s {__version__}"
+    )
 
     args = parser.parse_args()
 
