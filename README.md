@@ -87,6 +87,16 @@ optional arguments:
 
 🔗 Please also visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
 
+> Wiki page is in process of rewritting!
+
+**Output examples**
+
+|Single mode|Multi mode|
+|-----------|----------|
+|![single](https://github.com/user-attachments/assets/5c4d4377-8053-48d7-b7f1-4a4172e1df49)|![multi](https://github.com/user-attachments/assets/d2810d22-52c0-4ac0-9478-9a397c40a026)|
+
+These figures are generated using functional groupping mode (`-g`/`--group`), `Blues` colormap and 300 dpi
+
 ## Contributing
 Contributions are welcome! If you have any ideas, bug fixes, or enhancements, feel free to open an issue or submit a pull request.
 
