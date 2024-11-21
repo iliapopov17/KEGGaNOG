@@ -13,6 +13,7 @@ def main():
         description="Process eggnog-mapper outputs with KEGG-Decoder."
     )
     parser.add_argument(
+        "-M",
         "--multi",
         action="store_true",
         help="Multiple inputs",
