@@ -30,6 +30,7 @@
 - `KEGG-Koala` is a web-tool which can work for more than 24 hours. `eggNOG-mapper` can be installed locally on your PC / server and work faster.
 - This tool `KEGGaNOG` makes `eggNOG-mapper` meet `KEGG-Decoder`! It parses `eggNOG-mapper` output, make it fit for the input to `KEGG-Decoder` and then visualize KEGG Pathways as the heatmap!
 - **Pro-tip:** `eggNOG-mapper` and `KEGGaNOG` could be wrapped into 🐍 `Snakemake` pipeline making metabolic profiling a "one-click" process!
+- **Ultra-Pro-tip:** `KEGGaNOG` uses a lot of legacy code due to hardwired `KEGG-Decoder`. Either use `Snakemake` v.5.11 or use the latest version but define two separate `conda` envinronments - one for `eggNOG-mapper` and the other one for `KEGGaNOG`.
 
 ## Installation
 
@@ -99,13 +100,13 @@ These figures are generated using functional groupping mode (`-g`/`--group`), `B
 
 ## Advantages
 
-1. **Free Access to KEGG Annotations**: Provides KEGG Ortholog (KO) annotations without requiring a KEGG license, making it budget-friendly.
-2. **High-Throughput Capability**: Optimized for rapid KO assignment in large-scale datasets, ideal for metagenomics and genomics projects.
-3. **Broad Functional Coverage**: Leverages the extensive eggNOG database to annotate genes across a wide range of taxa.
+1. **Free Access to KEGG Annotations:** Provides KEGG Ortholog (KO) annotations without requiring a KEGG license, making it budget-friendly.
+2. **High-Throughput Capability:** Optimized for rapid KO assignment in large-scale datasets, ideal for metagenomics and genomics projects.
+3. **Broad Functional Coverage:** Leverages the extensive eggNOG database to annotate genes across a wide range of taxa.
 
 ## Limitation
 
-1. **Indirect KO Mapping**: eggNOG-mapper doesn’t directly use the KEGG database, its KO term assignments are inferred through orthologous groups (eggNOG entries). This can sometimes result in less precise annotations.
+1. **Indirect KO Mapping:** `eggNOG-mapper` doesn’t directly use the KEGG database, its KO term assignments are inferred through orthologous groups (eggNOG entries). This can sometimes result in less precise annotations.
 
 ## Tool name background
 
