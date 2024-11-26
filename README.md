@@ -110,7 +110,7 @@ These figures are generated using functional groupping mode (`-g`/`--group`), `B
 
 ## Tool name background
 
-`KEGGaNOG` stands for “KEGG out of NOG”, highlighting its purpose: extracting KEGG Ortholog (KO) annotations from eggNOG’s Non-supervised Orthologous Groups.
+`KEGGaNOG` stands for “KEGG out of NOG”, highlighting its purpose: extracting KEGG Ortholog annotations from eggNOG’s Non-supervised Orthologous Groups.
 
 ## Contributing
 Contributions are welcome! If you have any ideas, bug fixes, or enhancements, feel free to open an issue or submit a pull request.
