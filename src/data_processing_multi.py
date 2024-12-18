@@ -64,13 +64,18 @@ def parse_emapper(input_file, sample_folder, file_prefix):
 def run_kegg_decoder(input_file, sample_folder, file_prefix):
     print(f"Running KEGG-Decoder on {file_prefix}...")
 
-    output_file = os.path.join(sample_folder, f"{file_prefix}_emapper_output.list")
+    output_file = os.path.join(sample_folder, f"{file_prefix}_pathways.tsv")
 
     # Run KEGG-Decoder via subprocess with progress bar
-    with tqdm(total=1, desc=f"Executing KEGG-Decoder for {file_prefix}") as pbar:
-        subprocess.run(
-            ["KEGG-decoder", "-i", input_file, "-o", output_file, "-v", "static"]
-        )
+    with tqdm(total=1, desc="Executing KEGG-Decoder") as pbar:
+        command = [
+        "python", 
+        "src/KEGG_decoder.py",  # Path to KEGG_decoder.py
+        "-i", input_file,
+        "-o", output_file
+        ]
+        # Run the command and wait for it to finish
+        subprocess.run(command, check=True)
         pbar.update(1)
 
     # Replace SAMPLE with actual file prefix
@@ -92,16 +97,16 @@ def merge_outputs(output_folder):
     # Initialize an empty DataFrame for the merged data
     merged_df = pd.DataFrame()
 
-    # Path pattern for finding all *_emapper_output.list files
+    # Path pattern for finding all *_pathways.tsv files
     output_files = glob.glob(
-        os.path.join(output_folder, "temp_files", "*", "*_emapper_output.list")
+        os.path.join(output_folder, "temp_files", "*", "*_pathways.tsv")
     )
 
     # Iterate over each output file
     for file_path in output_files:
         # Extract sample name by getting the parent directory name
         file_prefix = os.path.splitext(os.path.basename(file_path))[0].replace(
-            "_emapper_output", ""
+            "_pathways", ""
         )
 
         # Read each file into a pandas DataFrame
@@ -121,7 +126,7 @@ def merge_outputs(output_folder):
         )
 
     # Save the merged DataFrame
-    merged_output_file = os.path.join(output_folder, "merged_output.tsv")
+    merged_output_file = os.path.join(output_folder, "merged_pathways.tsv")
     merged_df.to_csv(merged_output_file, sep="\t", index=False)
     print(f"Files merged successfully into '{merged_output_file}'.")
 

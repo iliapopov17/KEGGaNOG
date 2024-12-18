@@ -7,62 +7,74 @@ from tqdm import tqdm
 
 
 # Function to generate the heatmap
-def generate_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
+def generate_heatmap_multi(kegg_decoder_file, output_folder, dpi, color):
     print("Generating heatmap...")
-
-    # Read the KEGG-Decoder output
-    with open(kegg_decoder_file, "r") as file:
-        lines = file.readlines()
 
     # Process data for heatmap with progress bar
     with tqdm(total=3, desc="Preparing heatmap data") as pbar:
-        header = lines[0].strip().split("\t")
-        values = lines[1].strip().split("\t")
-        data = {"Function": header[1:], sample_name: [float(v) for v in values[1:]]}
-        df = pd.DataFrame(data)
+        df = pd.DataFrame(kegg_decoder_file)
         pbar.update(1)
 
         # Split into three parts for separate heatmaps
-        df1, df2, df3 = np.array_split(df, 3)
+        #df1, df2, df3 = np.array_split(df, 3) - DEPRECATED
+
+        # Get the number of rows
+        num_rows = len(df)
+
+        # Calculate the split indices for 3 parts
+        split_size = num_rows // 3
+
+        # Split the dataframe manually
+        df1 = df.iloc[:split_size]
+        df2 = df.iloc[split_size:2*split_size]
+        df3 = df.iloc[2*split_size:]
         pbar.update(2)
 
+    fig_w = 0.5 * (df1.shape[1] - 2) + 19.5
+
     # Create a grid for the heatmap and colorbar
-    fig, axes = plt.subplots(1, 3, figsize=(20, 20))
+    fig, axes = plt.subplots(1, 3, figsize=(fig_w, 20))
     cbar_ax = fig.add_axes([0.92, 0.4, 0.02, 0.2])  # Colorbar axis on the right
 
     with tqdm(total=3, desc="Creating heatmap parts") as pbar:
         sns.heatmap(
-            df1.pivot_table(values=sample_name, index="Function", fill_value=0),
+            df1.set_index("Function"),
             cmap=f"{color}",
-            annot=True,
+            annot=False,
             linewidths=0.5,
             ax=axes[0],
             cbar=False,
         )
         axes[0].set_title("Part 1")
+        axes[0].tick_params(axis="x", rotation=45)
+        axes[0].set_xticklabels(axes[0].get_xticklabels(), ha="right")
         pbar.update(1)
 
         sns.heatmap(
-            df2.pivot_table(values=sample_name, index="Function", fill_value=0),
+            df2.set_index("Function"),
             cmap=f"{color}",
-            annot=True,
+            annot=False,
             linewidths=0.5,
             ax=axes[1],
             cbar=False,
         )
         axes[1].set_title("Part 2")
+        axes[1].tick_params(axis="x", rotation=45)
+        axes[1].set_xticklabels(axes[0].get_xticklabels(), ha="right")
         pbar.update(1)
 
         sns.heatmap(
-            df3.pivot_table(values=sample_name, index="Function", fill_value=0),
+            df3.set_index("Function"),
             cmap=f"{color}",
-            annot=True,
+            annot=False,
             linewidths=0.5,
             ax=axes[2],
             cbar_ax=cbar_ax,
             cbar_kws={"label": "Pathway completeness"},
         )
         axes[2].set_title("Part 3")
+        axes[2].tick_params(axis="x", rotation=45)
+        axes[2].set_xticklabels(axes[0].get_xticklabels(), ha="right")
         pbar.update(1)
 
         axes[1].set_ylabel("")

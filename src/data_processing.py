@@ -55,13 +55,18 @@ def parse_emapper(input_file, temp_folder):
 def run_kegg_decoder(input_file, temp_folder, sample_name):
     print("Running KEGG-Decoder...")
 
-    output_file = os.path.join(temp_folder, "output.list")
+    output_file = os.path.join(temp_folder, "pathways.tsv")
 
     # Run KEGG-Decoder via subprocess with progress bar
     with tqdm(total=1, desc="Executing KEGG-Decoder") as pbar:
-        subprocess.run(
-            ["KEGG-decoder", "-i", input_file, "-o", output_file, "-v", "static"]
-        )
+        command = [
+        "python", 
+        "src/KEGG_decoder.py",  # Path to KEGG_decoder.py
+        "-i", input_file,
+        "-o", output_file
+        ]
+        # Run the command and wait for it to finish
+        subprocess.run(command, check=True)
         pbar.update(1)
 
     with open(output_file, "r") as file:

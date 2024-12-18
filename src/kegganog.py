@@ -5,8 +5,8 @@ import shutil
 from . import data_processing
 from . import simple_heatmap
 from . import grouped_heatmap
-from . import kegg_a_nog_multi
-from kegg_a_nog import __version__
+from . import kegganog_multi
+from src import __version__
 
 warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
@@ -74,7 +74,7 @@ def main():
     os.makedirs(temp_folder, exist_ok=True)
 
     if args.multi:
-        kegg_a_nog_multi.main()
+        kegganog_multi.main()
     else:
 
         # Step 1: Parse eggNOG-mapper output
