@@ -23,7 +23,7 @@ def generate_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
         pbar.update(1)
 
         # Split into three parts for separate heatmaps
-        #df1, df2, df3 = np.array_split(df, 3) - DEPRECATED
+        # df1, df2, df3 = np.array_split(df, 3) - DEPRECATED
 
         # Get the number of rows
         num_rows = len(df)
@@ -33,8 +33,8 @@ def generate_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
 
         # Split the dataframe manually
         df1 = df.iloc[:split_size]
-        df2 = df.iloc[split_size:2*split_size]
-        df3 = df.iloc[2*split_size:]
+        df2 = df.iloc[split_size : 2 * split_size]
+        df3 = df.iloc[2 * split_size :]
         pbar.update(2)
 
     # Create a grid for the heatmap and colorbar

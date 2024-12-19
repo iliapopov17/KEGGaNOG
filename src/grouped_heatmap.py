@@ -369,7 +369,11 @@ def generate_grouped_heatmap(kegg_decoder_file, output_folder, dpi, color, sampl
         part[value_columns] = part[value_columns].fillna(0)
 
         pivot_table = part.pivot_table(
-            values=value_columns, index="Function", aggfunc="mean", fill_value=0, observed=False
+            values=value_columns,
+            index="Function",
+            aggfunc="mean",
+            fill_value=0,
+            observed=False,
         )
 
         # Create a mask for rows starting with 'split_'
@@ -418,7 +422,14 @@ def generate_grouped_heatmap(kegg_decoder_file, output_folder, dpi, color, sampl
         pbar.update(1)
 
         # Plot for Part 3
-        plot_heatmap(part3, part3_groups, axes[2], cbar=True, cbar_ax=cbar_ax, cbar_kws={"label": "Pathway completeness"})
+        plot_heatmap(
+            part3,
+            part3_groups,
+            axes[2],
+            cbar=True,
+            cbar_ax=cbar_ax,
+            cbar_kws={"label": "Pathway completeness"},
+        )
         axes[2].set_title("Part 3")
         pbar.update(1)
 

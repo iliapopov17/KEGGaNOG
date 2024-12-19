@@ -4,6 +4,7 @@ import csv
 import pandas as pd
 from tqdm import tqdm
 import glob
+from pathlib import Path
 
 
 # Function to parse eggnog-mapper output and prepare for KEGG-Decoder
@@ -66,13 +67,18 @@ def run_kegg_decoder(input_file, sample_folder, file_prefix):
 
     output_file = os.path.join(sample_folder, f"{file_prefix}_pathways.tsv")
 
+    package_dir = Path(__file__).resolve().parent  # Directory of the current script
+    kegg_decoder_script = package_dir / "KEGG_decoder.py"
+
     # Run KEGG-Decoder via subprocess with progress bar
     with tqdm(total=1, desc="Executing KEGG-Decoder") as pbar:
         command = [
-        "python", 
-        "src/KEGG_decoder.py",  # Path to KEGG_decoder.py
-        "-i", input_file,
-        "-o", output_file
+            "python",
+            str(kegg_decoder_script),  # Path to KEGG_decoder.py
+            "-i",
+            input_file,
+            "-o",
+            output_file,
         ]
         # Run the command and wait for it to finish
         subprocess.run(command, check=True)

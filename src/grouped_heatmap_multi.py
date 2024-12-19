@@ -148,7 +148,7 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
                     ),
                 )
 
-    def plot_heatmap(part, group_labels, ax, cbar, cbar_ax=None,cbar_kws=None):
+    def plot_heatmap(part, group_labels, ax, cbar, cbar_ax=None, cbar_kws=None):
         # Create the pivot table
         value_columns = part.columns[
             1:-1
@@ -158,7 +158,11 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
         part[value_columns] = part[value_columns].fillna(0)
 
         pivot_table = part.pivot_table(
-            values=value_columns, index="Function", aggfunc="mean", fill_value=0, observed=False
+            values=value_columns,
+            index="Function",
+            aggfunc="mean",
+            fill_value=0,
+            observed=False,
         )
 
         # Create a mask for rows starting with 'split_'
@@ -210,7 +214,14 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
         pbar.update(1)
 
         # Plot for Part 3
-        plot_heatmap(part3, part3_groups, axes[2], cbar=True, cbar_ax=cbar_ax, cbar_kws={"label": "Pathway completeness"})
+        plot_heatmap(
+            part3,
+            part3_groups,
+            axes[2],
+            cbar=True,
+            cbar_ax=cbar_ax,
+            cbar_kws={"label": "Pathway completeness"},
+        )
         axes[2].set_title("Part 3")
         axes[2].tick_params(axis="x", rotation=45)
         axes[2].set_xticklabels(axes[0].get_xticklabels(), ha="right")
