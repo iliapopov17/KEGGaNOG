@@ -30,13 +30,12 @@
 - `KEGG-Koala` is a web-tool which can work for more than 24 hours. `eggNOG-mapper` can be installed locally on your PC / server and work faster.
 - This tool `KEGGaNOG` makes `eggNOG-mapper` meet `KEGG-Decoder`! It parses `eggNOG-mapper` output, make it fit for the input to `KEGG-Decoder` and then visualize KEGG Pathways as the heatmap!
 - **Pro-tip:** `eggNOG-mapper` and `KEGGaNOG` could be wrapped into 🐍 `Snakemake` pipeline making metabolic profiling a "one-click" process!
-- **Ultra-Pro-tip:** `KEGGaNOG` uses a lot of legacy code due to hardwired `KEGG-Decoder`. Either use `Snakemake` v.5.11 or use the latest version but define two separate `conda` envinronments - one for `eggNOG-mapper` and the other one for `KEGGaNOG`.
 
 ## Installation
 
 ```bash
-# Linux / WSL / Intel Macs
-conda create -n kegganog python=3.13.1
+# Linux / WSL / macOS
+conda create -n kegganog pip -y
 conda activate kegganog
 pip install kegganog
 ```
@@ -101,3 +100,7 @@ Contributions are welcome! If you have any ideas, bug fixes, or enhancements, fe
 For any inquiries or support, feel free to contact me via [email](mailto:iljapopov17@gmail.com)
 
 Happy functional annotation! 💻🧬
+
+## Acknowledgements
+
+In previous versions of `KEGGaNOG` [**`KEGG-Decoder`**](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/README.md) was used as a dependecy. It made me use `Python 3.6`, which is no good by the end of 2024. In `KEGGaNOG` v. 0.7.0 and higher `Python 3.13.1` is used. It became possible after I used not the whole [**`KEGG-Decoder`**](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/README.md), but its one [script](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/KEGG_decoder.py). I greatly thank `KEGG-Decoder`'s developers.
