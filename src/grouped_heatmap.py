@@ -409,6 +409,13 @@ def generate_grouped_heatmap(kegg_decoder_file, output_folder, dpi, color, sampl
             if label == "":
                 tick.tick1line.set_visible(False)  # Hide major tick mark
                 tick.tick2line.set_visible(False)  # Hide minor tick mark
+                tick.gridline.set_visible(False)   # Hide gridline if present
+                tick.set_visible(False)            # Completely hide the tick object
+
+        # Align y-tick labels
+        ax.yaxis.tick_right()
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=0, va="center", ha="left")
+
 
     with tqdm(total=3, desc="Creating heatmap parts") as pbar:
         # Plot for Part 1
@@ -439,11 +446,11 @@ def generate_grouped_heatmap(kegg_decoder_file, output_folder, dpi, color, sampl
         axes[2].set_ylabel("")
 
         # Adjusting function labels to the right
-        for ax in axes:
-            ax.yaxis.tick_right()  # Move y-ticks to the right
-            ax.set_yticklabels(
-                ax.get_yticklabels(), rotation=0, va="center", ha="left"
-            )  # Align labels
+        #for ax in axes:
+            #ax.yaxis.tick_right()  # Move y-ticks to the right
+            #ax.set_yticklabels(
+                #ax.get_yticklabels(), rotation=0, va="center", ha="left"
+            #)  # Align labels
 
         # Layout adjustments
         plt.tight_layout(rect=[0, 0, 0.9, 1])
