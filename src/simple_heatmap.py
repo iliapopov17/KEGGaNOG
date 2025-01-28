@@ -8,7 +8,6 @@ from tqdm import tqdm
 
 # Function to generate the heatmap
 def generate_heatmap(kegg_decoder_file, output_folder, dpi, color, sample_name):
-    print("Generating heatmap...")
 
     # Read the KEGG-Decoder output
     with open(kegg_decoder_file, "r") as file:

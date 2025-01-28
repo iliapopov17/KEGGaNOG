@@ -184,25 +184,13 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
         ax.tick_params(axis="y", labelrotation=0)
         add_group_labels(ax, part, group_labels)
 
-        # Remove y-tick labels for rows starting with 'split_'
-        yticklabels = ax.get_yticklabels()
-        new_yticklabels = [
-            "" if label.get_text().startswith("split_") else label.get_text()
-            for label in yticklabels
-        ]
-        ax.set_yticklabels(new_yticklabels)
-
-        # Remove tick marks (dashes) for empty y-tick labels
-        for tick, label in zip(ax.yaxis.get_major_ticks(), new_yticklabels):
-            if label == "":
+        # Hide ticks and labels for rows starting with 'split_'
+        for tick, label in zip(ax.yaxis.get_major_ticks(), ax.get_yticklabels()):
+            if label.get_text().startswith("split_"):
+                label.set_visible(False)  # Hide the label
+                tick.set_visible(False)  # Hide the tick completely
                 tick.tick1line.set_visible(False)  # Hide major tick mark
                 tick.tick2line.set_visible(False)  # Hide minor tick mark
-                tick.gridline.set_visible(False)   # Hide gridline if present
-                tick.set_visible(False)            # Completely hide the tick object
-
-        # Align y-tick labels
-        ax.yaxis.tick_right()
-        ax.set_yticklabels(ax.get_yticklabels(), rotation=0, va="center", ha="left")
 
     with tqdm(total=3, desc="Creating heatmap parts") as pbar:
         # Plot for Part 1
@@ -239,11 +227,11 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
     axes[2].set_ylabel("")
 
     # Adjusting function labels to the right
-    #for ax in axes:
-        #ax.yaxis.tick_right()  # Move y-ticks to the right
-        #ax.set_yticklabels(
-            #ax.get_yticklabels(), rotation=0, va="center", ha="left"
-        #)  # Align labels
+    for ax in axes:
+        ax.yaxis.tick_right()  # Move y-ticks to the right
+        ax.set_yticklabels(
+            ax.get_yticklabels(), rotation=0, va="center", ha="left"
+        )  # Align labels
 
     # Layout adjustments
     plt.tight_layout(rect=[0, 0, 0.9, 1])

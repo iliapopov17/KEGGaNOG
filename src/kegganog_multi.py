@@ -2,6 +2,7 @@ import argparse
 import warnings
 import os
 import shutil
+from pathlib import Path
 from . import data_processing_multi
 from . import simple_heatmap_multi
 from . import grouped_heatmap_multi
@@ -101,11 +102,13 @@ def main():
 
     print(f"Heatmap saved in {args.output}/heatmap_figure.png")
 
+    # Get the path to the current directory (same location as the script)
+    current_dir = Path(__file__).resolve().parent
+    pycache_dir = current_dir / "__pycache__"
 
-def clean_pycache(dir_path):
-    for root, dirs, files in os.walk(dir_path):
-        if "__pycache__" in dirs:
-            shutil.rmtree(os.path.join(root, "__pycache__"))
+    # Check if __pycache__ exists and remove it
+    if pycache_dir.exists() and pycache_dir.is_dir():
+        shutil.rmtree(pycache_dir)
 
 
 if __name__ == "__main__":

@@ -5,6 +5,7 @@ import pandas as pd
 from tqdm import tqdm
 import glob
 from pathlib import Path
+import io
 
 
 # Function to parse eggnog-mapper output and prepare for KEGG-Decoder
@@ -34,27 +35,24 @@ def parse_emapper(input_file, sample_folder, file_prefix):
         df_kegg_ko["KEGG_ko"] = df_kegg_ko["KEGG_ko"].str.replace(",", "\n")
         pbar.update(1)
 
-    # Save the parsed file in the sample's subdirectory
-    parsed_file = os.path.join(sample_folder, f"{file_prefix}_parsed.txt")
-    with tqdm(total=1, desc=f"Saving {file_prefix} parsed file") as pbar:
+        buffer = io.StringIO()
         df_kegg_ko.to_csv(
-            parsed_file,
+            buffer,
             sep="\t",
             index=False,
             header=False,
             quoting=csv.QUOTE_MINIMAL,
             escapechar="\\",
         )
+        buffer.seek(0)
+
+        # Read the CSV content into a string and remove quotes
+        content = buffer.read().replace('"', "")
         pbar.update(1)
 
-    # Remove all quotation marks from the parsed file
     parsed_filtered_file = os.path.join(
-        sample_folder, f"{file_prefix}_parsed_filtered.txt"
+        sample_folder, f"{file_prefix}_parsed_KO_terms.txt"
     )
-    with open(parsed_file, "r") as file:
-        content = file.read()
-
-    content = content.replace('"', "")
     with open(parsed_filtered_file, "w") as file:
         file.write(content)
 
