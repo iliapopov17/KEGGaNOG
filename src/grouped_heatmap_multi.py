@@ -184,17 +184,11 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
         ax.tick_params(axis="y", labelrotation=0)
         add_group_labels(ax, part, group_labels)
 
-        # Remove y-tick labels for rows starting with 'split_'
-        yticklabels = ax.get_yticklabels()
-        new_yticklabels = [
-            "" if label.get_text().startswith("split_") else label.get_text()
-            for label in yticklabels
-        ]
-        ax.set_yticklabels(new_yticklabels)
-
-        # Remove tick marks (dashes) for empty y-tick labels
-        for tick, label in zip(ax.yaxis.get_major_ticks(), new_yticklabels):
-            if label == "":
+        # Hide ticks and labels for rows starting with 'split_'
+        for tick, label in zip(ax.yaxis.get_major_ticks(), ax.get_yticklabels()):
+            if label.get_text().startswith("split_"):
+                label.set_visible(False)  # Hide the label
+                tick.set_visible(False)  # Hide the tick completely
                 tick.tick1line.set_visible(False)  # Hide major tick mark
                 tick.tick2line.set_visible(False)  # Hide minor tick mark
 
