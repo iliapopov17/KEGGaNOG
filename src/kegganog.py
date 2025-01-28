@@ -2,6 +2,7 @@ import argparse
 import warnings
 import os
 import shutil
+from pathlib import Path
 from . import data_processing
 from . import simple_heatmap
 from . import grouped_heatmap
@@ -82,7 +83,7 @@ def main():
 
         # Step 2: Run KEGG-Decoder
         kegg_decoder_file = data_processing.run_kegg_decoder(
-            parsed_filtered_file, temp_folder, args.name
+            parsed_filtered_file, args.output, args.name
         )
 
         # Step 3: Generate the heatmap
@@ -98,15 +99,16 @@ def main():
                 kegg_decoder_file, args.output, args.dpi, args.color, args.name
             )
 
-        print(f"Heatmap saved in {args.output}/heatmap_figure.png")
+    print(f"Heatmap saved in {args.output}/heatmap_figure.png")
 
+    # Get the path to the current directory (same location as the script)
+    current_dir = Path(__file__).resolve().parent
+    pycache_dir = current_dir / "__pycache__"
 
-def clean_pycache(dir_path):
-    for root, dirs, files in os.walk(dir_path):
-        if "__pycache__" in dirs:
-            shutil.rmtree(os.path.join(root, "__pycache__"))
+    # Check if __pycache__ exists and remove it
+    if pycache_dir.exists() and pycache_dir.is_dir():
+        shutil.rmtree(pycache_dir)
 
 
 if __name__ == "__main__":
-    clean_pycache(os.path.dirname(__file__))
     main()
