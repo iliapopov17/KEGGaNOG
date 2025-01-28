@@ -58,7 +58,7 @@ def run_kegg_decoder(input_file, output_folder, sample_name):
     output_file = os.path.join(output_folder, f"{sample_name}_pathways.tsv")
 
     package_dir = Path(__file__).resolve().parent  # Directory of the current script
-    kegg_decoder_script = package_dir / "KO_decode.py"
+    kegg_decoder_script = package_dir / "KEGG_decoder.py"
 
     # Run KEGG-Decoder via subprocess with progress bar
     with tqdm(total=1, desc="Decoding KO terms") as pbar:
