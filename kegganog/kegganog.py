@@ -7,7 +7,7 @@ from . import data_processing
 from . import simple_heatmap
 from . import grouped_heatmap
 from . import kegganog_multi
-from src import __version__
+from kegganog import __version__
 
 warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 

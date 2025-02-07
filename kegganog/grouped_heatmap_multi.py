@@ -4,7 +4,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
-from src.grouped_heatmap import function_groups
+from kegganog.grouped_heatmap import function_groups
 
 
 def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color):
