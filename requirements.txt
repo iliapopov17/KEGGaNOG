@@ -9,4 +9,5 @@ scipy==1.14.1
 seaborn==0.13.2
 tanglegram==0.2.0
 tqdm==4.67.1
+networkx==3.4.2
 #snakemake==8.25.5
