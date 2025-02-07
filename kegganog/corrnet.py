@@ -16,7 +16,7 @@ def correlation_network(
     background_color="white"
 ):
     """
-    Generates a highly customizable boxplot for pathway completeness.
+    Generates a highly customizable correlation network of samples.
 
     Parameters:
     - df: Pandas DataFrame containing the dataset
