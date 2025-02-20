@@ -157,13 +157,7 @@ def generate_grouped_heatmap_multi(kegg_decoder_file, output_folder, dpi, color)
         # Fill NaN values in the selected columns
         part[value_columns] = part[value_columns].fillna(0)
 
-        pivot_table = part.pivot_table(
-            values=value_columns,
-            index="Function",
-            aggfunc="mean",
-            fill_value=0,
-            observed=False,
-        )
+        pivot_table = part.set_index("Function")[value_columns]  # Preserve column order
 
         # Create a mask for rows starting with 'split_'
         mask = pivot_table.index.str.startswith("split_")
