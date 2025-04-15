@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/98af00b7-154b-4a54-b45b-b470aba1e56d)# KEGGaNOG
+# KEGGaNOG
 
 <img src="https://github.com/iliapopov17/KEGGaNOG/blob/main/imgs/KaN_logo_light.png#gh-light-mode-only" align="left" width = 25%/>
 <img src="https://github.com/iliapopov17/KEGGaNOG/blob/main/imgs/KaN_logo_dark.png#gh-dark-mode-only" align="left" width = 25%/>
