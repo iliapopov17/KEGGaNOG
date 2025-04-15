@@ -37,6 +37,12 @@ def main():
         help="Output folder to save results",
     )
     parser.add_argument(
+        "-overwrite",
+        "--overwrite",
+        action="store_true",
+        help="Overwrite the output directory if it already exists",
+    )
+    parser.add_argument(
         "-dpi",
         "--dpi",
         type=int,
@@ -69,7 +75,16 @@ def main():
     args = parser.parse_args()
 
     # Create output and temporary directories
-    os.makedirs(args.output, exist_ok=True)
+
+    if os.path.exists(args.output):
+        if not args.overwrite:
+            raise FileExistsError(
+                f"Output directory '{args.output}' already exists. Use --overwrite to overwrite it."
+            )
+        else:
+            shutil.rmtree(args.output)
+
+    os.makedirs(args.output)
     temp_folder = os.path.join(args.output, "temp_files")
     os.makedirs(temp_folder, exist_ok=True)
 
