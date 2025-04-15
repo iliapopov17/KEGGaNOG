@@ -1,4 +1,4 @@
-# KEGGaNOG
+![image](https://github.com/user-attachments/assets/98af00b7-154b-4a54-b45b-b470aba1e56d)# KEGGaNOG
 
 <img src="https://github.com/iliapopov17/KEGGaNOG/blob/main/imgs/KaN_logo_light.png#gh-light-mode-only" align="left" width = 25%/>
 <img src="https://github.com/iliapopov17/KEGGaNOG/blob/main/imgs/KaN_logo_dark.png#gh-dark-mode-only" align="left" width = 25%/>
@@ -67,21 +67,27 @@ optional arguments:
   -V, --version         show program's version number and exit
 ```
 
-🔗 Please also visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
+🔗 Please visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
 
-> Wiki page is in process of rewritting!
+## Output examples gallery
 
-**Output examples**
+**Default visualization**
 
 |Single mode|Multi mode|
 |-----------|----------|
-|![single](https://github.com/user-attachments/assets/5c4d4377-8053-48d7-b7f1-4a4172e1df49)|![multi](https://github.com/user-attachments/assets/d2810d22-52c0-4ac0-9478-9a397c40a026)|
+|<img src="https://github.com/user-attachments/assets/b281eae8-8687-4193-ad95-3abc24548506" alt="heatmap_figure"/>|<img src="https://github.com/user-attachments/assets/fc517814-3404-4c8e-8ace-b78fda52aa08" alt="heatmap_figure"/>|
 
-These figures are generated using functional groupping mode (`-g`/`--group`), `Blues` colormap and 300 dpi
+These figures are generated using functional groupping mode (`-g`/`--group`) and `Greens` colormap
+
+**User APIs visualization**
+
+|[Barplot](https://github.com/iliapopov17/KEGGaNOG/wiki/Barplot-API)|[Boxplot](https://github.com/iliapopov17/KEGGaNOG/wiki/Boxplot-API)|[Radarplot](https://github.com/iliapopov17/KEGGaNOG/wiki/Radarplot-API)|[Correlation Network](https://github.com/iliapopov17/KEGGaNOG/wiki/Correlation-Network-API)|
+|-------|-------|---------|-------------------|
+|![image](https://github.com/user-attachments/assets/81d69bef-f69c-4960-b2d3-73e348e3853a)|![image](https://github.com/user-attachments/assets/f98fd993-20b7-4b00-b203-83b40fe35f9c)|![image](https://github.com/user-attachments/assets/dd75e5d8-e3c8-4eaa-b009-02c042534a53)|![image](https://github.com/user-attachments/assets/e76057b9-bcfd-4ba9-a4cf-cb7b4269441a)|
 
 ## Advantages
 
-1. **Free Access to KEGG Annotations:** Provides KEGG Ortholog (KO) annotations without requiring a KEGG license, making it budget-friendly.
+1. **Seemless Access to KEGG Annotations:** Provides KEGG Ortholog (KO) annotations without requiring a KEGG license.
 2. **High-Throughput Capability:** Optimized for rapid KO assignment in large-scale datasets, ideal for metagenomics and genomics projects.
 3. **Broad Functional Coverage:** Leverages the extensive eggNOG database to annotate genes across a wide range of taxa.
 
@@ -103,4 +109,4 @@ Happy functional annotation! 💻🧬
 
 ## Acknowledgements
 
-In previous versions of `KEGGaNOG` [**`KEGG-Decoder`**](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/README.md) was used as a dependecy. It made me use `Python 3.6`, which is no good by the end of 2024. In `KEGGaNOG` v. 0.7.0 and higher `Python 3.13.1` is used. It became possible after I used not the whole [**`KEGG-Decoder`**](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/README.md), but its one [script](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/KEGG_decoder.py). I greatly thank `KEGG-Decoder`'s developers.
+For now `KEGGaNOG` uses [**`KEGG-Decoder`**](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/KEGG_decoder.py) as a main dependecy. I greatly thank [**`KEGG-Decoder`**](https://github.com/bjtully/BioData/blob/master/KEGGDecoder/KEGG_decoder.py)'s developers.
