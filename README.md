@@ -43,12 +43,12 @@ pip install kegganog
 ## Usage Guide
 
 ```
-usage: KEGGaNOG [-h] [-M] -i INPUT -o OUTPUT [-dpi DPI] [-c COLOR] [-n NAME]
-                [-g] [-V]
+usage: KEGGaNOG [-h] [-M] -i INPUT -o OUTPUT [-overwrite] [-dpi DPI]
+                [-c COLOR] [-n NAME] [-g] [-V]
 
 KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.
 
-optional arguments:
+options:
   -h, --help            show this help message and exit
   -M, --multi           “Multi” mode allows to run KEGGaNOG on multiple
                         eggNOG-mapper annotation files (a text file with file
@@ -57,6 +57,8 @@ optional arguments:
                         Path to eggNOG-mapper annotation file
   -o OUTPUT, --output OUTPUT
                         Output folder to save results
+  -overwrite, --overwrite
+                        Overwrite the output directory if it already exists
   -dpi DPI, --dpi DPI   DPI for the output image (default: 300)
   -c COLOR, --color COLOR, --colour COLOR
                         Cmap for seaborn heatmap. Recommended options: Greys,
