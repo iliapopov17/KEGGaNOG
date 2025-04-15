@@ -3,9 +3,8 @@ import warnings
 import os
 import shutil
 from pathlib import Path
-from . import data_processing
-from . import simple_heatmap
-from . import grouped_heatmap
+from .processing import data_processing
+from .cheatmaps import simple_heatmap, grouped_heatmap
 from . import kegganog_multi
 from .version import __version__
 
