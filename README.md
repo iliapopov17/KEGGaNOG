@@ -75,7 +75,7 @@ optional arguments:
 
 |Single mode|Multi mode|
 |-----------|----------|
-|<img src="https://github.com/user-attachments/assets/b281eae8-8687-4193-ad95-3abc24548506" alt="heatmap_figure"/>|<img src="https://github.com/user-attachments/assets/fc517814-3404-4c8e-8ace-b78fda52aa08" alt="heatmap_figure"/>|
+|![heatmap_figure](https://github.com/user-attachments/assets/2b50518d-1fff-46d6-8bfc-6a5b8c31356d)|![heatmap_figure](https://github.com/user-attachments/assets/484077b9-8212-4aa2-8a3e-1a831afba26f)|
 
 These figures are generated using functional groupping mode (`-g`/`--group`) and `Greens` colormap
 
