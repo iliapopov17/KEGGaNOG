@@ -57,15 +57,9 @@ def main():
 
     # Create output and temp directories
 
-    if os.path.exists(args.output):
-        if not args.overwrite:
-            raise FileExistsError(
-                f"Output directory '{args.output}' already exists. Use --overwrite to overwrite it."
-            )
-        else:
-            shutil.rmtree(args.output)
+    temp_folder = os.path.join(args.output, "temp_files")
+    os.makedirs(temp_folder, exist_ok=True)
 
-    os.makedirs(args.output)
     temp_folder = os.path.join(args.output, "temp_files")
     os.makedirs(temp_folder, exist_ok=True)
 
@@ -114,7 +108,7 @@ def main():
             kegg_decoder_file, args.output, args.dpi, args.color
         )
 
-    print(f"Heatmap saved in {args.output}/heatmap_figure.png")
+    # print(f"Heatmap saved in {args.output}/heatmap_figure.png")
 
     # Get the path to the current directory (same location as the script)
     current_dir = Path(__file__).resolve().parent
