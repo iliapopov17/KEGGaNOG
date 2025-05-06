@@ -33,12 +33,12 @@ def barplot(
     ylabel_style: str = "normal",
     xticks_fontsize: float = 12.0,
     xticks_color: str = "black",
-    xtick_weight: str = "normal",
-    xtick_style: str = "normal",
+    xticks_weight: str = "normal",
+    xticks_style: str = "normal",
     yticks_fontsize: float = 12.0,
     yticks_color: str = "black",
-    ytick_weight: str = "normal",
-    ytick_style: str = "normal",
+    yticks_weight: str = "normal",
+    yticks_style: str = "normal",
     grid: bool = True,
     grid_linestyle: str = "--",
     grid_alpha: float = 0.7,
@@ -58,8 +58,8 @@ def barplot(
     - xlabel, ylabel: Labels for axes.
     - xlabel_fontsize, xlabel_color, xlabel_weight, xlabel_style: X-axis label styling.
     - ylabel_fontsize, ylabel_color, ylabel_weight, ylabel_style: Y-axis label styling.
-    - xticks_fontsize, xticks_color, xtick_weight, xtick_style: X-ticks styling.
-    - yticks_fontsize, yticks_color, ytick_weight, ytick_style: Y-ticks styling.
+    - xticks_fontsize, xticks_color, xticks_weight, xticks_style: X-ticks styling.
+    - yticks_fontsize, yticks_color, yticks_weight, yticks_style: Y-ticks styling.
     - grid: Whether to show grid lines.
     - grid_linestyle, grid_alpha: Grid styling.
     - background_color: Figure background color.
@@ -129,14 +129,14 @@ def barplot(
     for label in ax.get_xticklabels():
         label.set_fontsize(xticks_fontsize)
         label.set_color(xticks_color)
-        label.set_weight(xtick_weight)
-        label.set_style(xtick_style)
+        label.set_weight(xticks_weight)
+        label.set_style(xticks_style)
 
     for label in ax.get_yticklabels():
         label.set_fontsize(yticks_fontsize)
         label.set_color(yticks_color)
-        label.set_weight(ytick_weight)
-        label.set_style(ytick_style)
+        label.set_weight(yticks_weight)
+        label.set_style(yticks_style)
 
     if grid:
         ax.grid(axis="x", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)

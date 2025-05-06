@@ -35,12 +35,12 @@ def boxplot(
     xticks_ha: str = "center",
     xticks_fontsize: float = 12.0,
     xticks_color: str = "black",
-    xtick_weight: str = "normal",
-    xtick_style: str = "normal",
+    xticks_weight: str = "normal",
+    xticks_style: str = "normal",
     yticks_fontsize: float = 12.0,
     yticks_color: str = "black",
-    ytick_weight: str = "normal",
-    ytick_style: str = "normal",
+    yticks_weight: str = "normal",
+    yticks_style: str = "normal",
     grid: bool = True,
     grid_color: str = "gray",
     grid_linestyle: str = "--",
@@ -61,8 +61,8 @@ def boxplot(
     - xlabel_fontsize, xlabel_color, xlabel_weight, xlabel_style: X-axis label styling.
     - ylabel_fontsize, ylabel_color, ylabel_weight, ylabel_style: Y-axis label styling.
     - xticks_rotation, xticks_ha: Rotation angle and alignment of x-axis tick labels.
-    - xticks_fontsize, xticks_color, xtick_weight, xtick_style: X-axis tick label styling.
-    - yticks_fontsize, yticks_color, ytick_weight, ytick_style: Y-axis tick label styling.
+    - xticks_fontsize, xticks_color, xticks_weight, xticks_style: X-axis tick label styling.
+    - yticks_fontsize, yticks_color, yticks_weight, yticks_style: Y-axis tick label styling.
     - grid: Whether to display a grid.
     - grid_color, grid_linestyle, grid_linewidth: Grid styling.
     - background_color: Background color of the figure.
@@ -110,16 +110,16 @@ def boxplot(
         ha=xticks_ha,
         fontsize=xticks_fontsize,
         color=xticks_color,
-        weight=xtick_weight,
-        style=xtick_style,
+        weight=xticks_weight,
+        style=xticks_style,
     )
 
     # Customize y-ticks
     plt.yticks(
         fontsize=yticks_fontsize,
         color=yticks_color,
-        weight=ytick_weight,
-        style=ytick_style,
+        weight=yticks_weight,
+        style=yticks_style,
     )
 
     # Grid settings
