@@ -87,6 +87,10 @@ These figures are generated using functional groupping mode (`-g`/`--group`) and
 |-------|-------|---------|-------------------|
 |![image](https://github.com/user-attachments/assets/81d69bef-f69c-4960-b2d3-73e348e3853a)|![image](https://github.com/user-attachments/assets/f98fd993-20b7-4b00-b203-83b40fe35f9c)|![image](https://github.com/user-attachments/assets/dd75e5d8-e3c8-4eaa-b009-02c042534a53)|![image](https://github.com/user-attachments/assets/e76057b9-bcfd-4ba9-a4cf-cb7b4269441a)|
 
+|[Streamgraph](https://github.com/iliapopov17/KEGGaNOG/wiki/Streamgraph)|[Stacked Barplot](https://github.com/iliapopov17/KEGGaNOG/wiki/Stacked-Barplot-API)|
+|-------|-------|
+|![kgnstream_OLD](https://github.com/user-attachments/assets/03de97f8-d0c0-4ca8-8096-34d846e42ec9)|![kgnstbar_OLD](https://github.com/user-attachments/assets/11e9e265-52c7-41b7-a284-64f3181caac3)|
+
 ## Advantages
 
 1. **Seemless Access to KEGG Annotations:** Provides KEGG Ortholog (KO) annotations without requiring a KEGG license.
