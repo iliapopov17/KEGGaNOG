@@ -45,6 +45,7 @@ def stacked_barplot(
     legend_fontsize: float = 9.0,
     legend_loc: str = "upper left",
     legend_bbox: Tuple[float, float] = (1.05, 1),
+    show_legend: bool = True,
 ):
     """
     Generates a customizable stacked bar plot showing pathway group completeness values across samples.
@@ -67,6 +68,7 @@ def stacked_barplot(
     - legend_fontsize: Font size for legend labels.
     - legend_loc: Position of the legend.
     - legend_bbox: Position of the legend box.
+    - show_legend: Whether to display the legend.
 
     Returns:
     - KgnStackedBarplot: An object containing the boxplot figure and axis for customization or saving.
@@ -123,12 +125,15 @@ def stacked_barplot(
         weight=ylabel_weight,
         style=ylabel_style,
     )
-    ax.legend(
-        title="Pathway Group",
-        bbox_to_anchor=legend_bbox,
-        loc=legend_loc,
-        fontsize=legend_fontsize,
-    )
+
+    if show_legend:
+        ax.legend(
+            title="Pathway Group",
+            bbox_to_anchor=legend_bbox,
+            loc=legend_loc,
+            fontsize=legend_fontsize,
+        )
+
     if grid:
         ax.grid(axis="y", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
 

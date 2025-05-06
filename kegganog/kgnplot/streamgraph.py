@@ -39,7 +39,8 @@ def streamgraph(
     legend_fontsize: float = 9.0,
     legend_loc: str = "upper left",
     legend_bbox: Tuple[float, float] = (1.05, 1),
-) -> None:
+    show_legend: bool = True,
+):
     """
     Generates a customizable streamgraph showing completeness values grouped by functional pathway groups across samples.
 
@@ -59,6 +60,7 @@ def streamgraph(
     - legend_fontsize: Font size for legend labels.
     - legend_loc: Position of the legend.
     - legend_bbox: Position of the legend box.
+    - show_legend: Whether to display the legend.
 
     Returns:
     - KgnStreamgraph: An object containing the boxplot figure and axis for customization or saving.
@@ -115,12 +117,15 @@ def streamgraph(
         weight=ylabel_weight,
         style=ylabel_style,
     )
-    ax.legend(
-        title="Pathway Group",
-        bbox_to_anchor=legend_bbox,
-        loc=legend_loc,
-        fontsize=legend_fontsize,
-    )
+
+    if show_legend:
+        ax.legend(
+            title="Pathway Group",
+            bbox_to_anchor=legend_bbox,
+            loc=legend_loc,
+            fontsize=legend_fontsize,
+        )
+
     if grid:
         ax.grid(axis="x", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
 
