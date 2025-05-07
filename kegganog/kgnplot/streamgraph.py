@@ -33,6 +33,13 @@ def streamgraph(
     ylabel_color: str = "black",
     ylabel_weight: str = "normal",
     ylabel_style: str = "normal",
+    xticks_rotation: float = 0.0,
+    xticks_ha: str = "center",
+    xticks_fontsize: float = 12.0,
+    xticks_color: str = "black",
+    xticks_weight: str = "normal",
+    xticks_style: str = "normal",
+    background_color="white",
     grid: bool = True,
     grid_linestyle: str = "--",
     grid_alpha: float = 0.7,
@@ -55,6 +62,9 @@ def streamgraph(
     - xlabel, ylabel: Axis labels.
     - xlabel_fontsize, xlabel_color, xlabel_weight, xlabel_style: X-axis label styling.
     - ylabel_fontsize, ylabel_color, ylabel_weight, ylabel_style: Y-axis label styling.
+    - xticks_rotation, xticks_ha: Rotation angle and alignment of x-axis tick labels.
+    - xticks_fontsize, xticks_color, xticks_weight, xticks_style: X-axis tick label styling.
+    - background_color: Background color of the figure.
     - grid: Whether to display a grid.
     - grid_color, grid_linestyle, grid_linewidth: Grid styling.
     - legend_fontsize: Font size for legend labels.
@@ -84,7 +94,7 @@ def streamgraph(
         colors = sns.color_palette(cmap, n_colors=len(df_plot.columns))
 
     # Plot
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize, facecolor=background_color)
 
     # Generate stackplot layers
     layers = ax.stackplot(
@@ -128,6 +138,16 @@ def streamgraph(
 
     if grid:
         ax.grid(axis="x", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
+
+    # Customize x-ticks
+    plt.xticks(
+        rotation=xticks_rotation,
+        ha=xticks_ha,
+        fontsize=xticks_fontsize,
+        color=xticks_color,
+        weight=xticks_weight,
+        style=xticks_style,
+    )
 
     # Get the path to the current directory (same location as the script)
     current_dir = Path(__file__).resolve().parent

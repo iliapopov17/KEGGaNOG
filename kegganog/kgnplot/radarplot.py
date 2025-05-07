@@ -37,6 +37,7 @@ def radarplot(
     fill_alpha: float = 0.25,
     line_width: float = 2.0,
     line_style: str = "solid",
+    background_color="white",
     legend_loc: str = "upper right",
     legend_bbox: Tuple[int, int] = (1.3, 1.1),
     show_legend: bool = True,
@@ -59,6 +60,7 @@ def radarplot(
     - yticklabels: Custom list of labels for the y-axis ticks.
     - fill_alpha: Transparency of the filled areas.
     - line_width, line_style: Line styling.
+    - background_color: Background color of the figure.
     - legend_loc: Location of the legend.
     - legend_bbox: Bounding box for the legend.
     - show_legend: Whether to display the legend.
@@ -76,7 +78,9 @@ def radarplot(
     angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
     angles += angles[:1]
 
-    fig, ax = plt.subplots(figsize=figsize, subplot_kw=dict(polar=True))
+    fig, ax = plt.subplots(
+        figsize=figsize, subplot_kw=dict(polar=True), facecolor=background_color
+    )
 
     if colors is None:
         colors = plt.rcParams["axes.prop_cycle"].by_key()["color"]
