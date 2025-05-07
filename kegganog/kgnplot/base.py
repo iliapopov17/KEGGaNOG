@@ -12,13 +12,22 @@ class KgnPlotBase:
         plt.show()
         return self.fig
 
-    def savefig(self, path: str, dpi: int = 300, bbox_inches: Optional[str] = "tight"):
+    def savefig(
+        self,
+        path: str,
+        dpi: int = 300,
+        transparent: bool = False,
+        bbox_inches: Optional[str] = "tight",
+    ):
         """
         Save the figure to a file.
 
         Parameters:
         - path: Path to save the figure (e.g. "plot.png", "plot.svg").
         - dpi: Dots per inch (resolution) of the output image. Default is 300.
+        - transparent: Whether to make saved figure transparent.
         - bbox_inches: Bounding box option passed to matplotlib. Default is "tight".
         """
-        self.fig.savefig(path, dpi=dpi, bbox_inches=bbox_inches)
+        self.fig.savefig(
+            path, dpi=dpi, transparent=transparent, bbox_inches=bbox_inches
+        )
