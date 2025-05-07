@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 from typing import Optional, Tuple, Union, List
 from pathlib import Path
 import shutil
@@ -16,6 +17,7 @@ def streamgraph(
     df,
     figsize: Tuple[int, int] = (14, 7),
     cmap: Optional[Union[str, List[str]]] = "tab20",
+    fill_alpha: float = 1.0,
     edgecolor: Optional[str] = None,
     edge_linewidth: float = 0.3,
     title: Optional[str] = None,
@@ -98,7 +100,12 @@ def streamgraph(
 
     # Generate stackplot layers
     layers = ax.stackplot(
-        df_plot.index, df_plot.values.T, labels=df_plot.columns, colors=colors, zorder=3
+        df_plot.index,
+        df_plot.values.T,
+        labels=df_plot.columns,
+        colors=colors,
+        alpha=fill_alpha,
+        zorder=3,
     )
 
     # Add black edges to each polygon
@@ -140,7 +147,11 @@ def streamgraph(
         ax.grid(axis="x", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
 
     # Customize x-ticks
+    positions = np.arange(len(df_plot.index))
+    labels = df_plot.index.tolist()
     plt.xticks(
+        positions,
+        labels,
         rotation=xticks_rotation,
         ha=xticks_ha,
         fontsize=xticks_fontsize,
@@ -148,6 +159,8 @@ def streamgraph(
         weight=xticks_weight,
         style=xticks_style,
     )
+
+    ax.set_xlim(-0.5, len(df_plot.index) - 0.5)
 
     # Get the path to the current directory (same location as the script)
     current_dir = Path(__file__).resolve().parent
