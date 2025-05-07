@@ -37,8 +37,8 @@ def stacked_barplot(
     xticks_ha: str = "center",
     xticks_fontsize: float = 12.0,
     xticks_color: str = "black",
-    xtick_weight: str = "normal",
-    xtick_style: str = "normal",
+    xticks_weight: str = "normal",
+    xticks_style: str = "normal",
     background_color="white",
     grid: bool = True,
     grid_linestyle: str = "--",
@@ -145,8 +145,8 @@ def stacked_barplot(
         ha=xticks_ha,
         fontsize=xticks_fontsize,
         color=xticks_color,
-        weight=xtick_weight,
-        style=xtick_style,
+        weight=xticks_weight,
+        style=xticks_style,
     )
 
     # Get the path to the current directory (same location as the script)
