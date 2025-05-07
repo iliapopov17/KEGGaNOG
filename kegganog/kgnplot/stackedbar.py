@@ -1,6 +1,7 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 from typing import Optional, Tuple, Union, List
 from pathlib import Path
 import shutil
@@ -66,7 +67,7 @@ def stacked_barplot(
     - xticks_fontsize, xticks_color, xticks_weight, xticks_style: X-axis tick label styling.
     - background_color: Background color of the figure.
     - grid: Whether to display a grid.
-    - grid_color, grid_linestyle, grid_linewidth: Grid styling.
+    - grid_color, grid_linestyle, grid_alpha: Grid styling.
     - legend_fontsize: Font size for legend labels.
     - legend_loc: Position of the legend.
     - legend_bbox: Position of the legend box.
@@ -140,7 +141,11 @@ def stacked_barplot(
         ax.grid(axis="y", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
 
     # Customize x-ticks
+    positions = np.arange(len(df_plot.index))
+    labels = df_plot.index.tolist()
     plt.xticks(
+        positions,
+        labels,
         rotation=xticks_rotation,
         ha=xticks_ha,
         fontsize=xticks_fontsize,
@@ -148,6 +153,8 @@ def stacked_barplot(
         weight=xticks_weight,
         style=xticks_style,
     )
+
+    ax.set_xlim(-0.5, len(df_plot.index) - 0.5)
 
     # Get the path to the current directory (same location as the script)
     current_dir = Path(__file__).resolve().parent
