@@ -67,7 +67,7 @@ def stacked_barplot(
     - xticks_fontsize, xticks_color, xticks_weight, xticks_style: X-axis tick label styling.
     - background_color: Background color of the figure.
     - grid: Whether to display a grid.
-    - grid_color, grid_linestyle, grid_linewidth: Grid styling.
+    - grid_color, grid_linestyle, grid_alpha: Grid styling.
     - legend_fontsize: Font size for legend labels.
     - legend_loc: Position of the legend.
     - legend_bbox: Position of the legend box.
