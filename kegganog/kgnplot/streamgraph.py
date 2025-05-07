@@ -57,6 +57,7 @@ def streamgraph(
     - df: Pandas DataFrame containing the dataset.
     - figsize: Tuple (width, height) of the figure.
     - cmap: Colormap name (str) or list of colors.
+    - fill_alpha: Transparency of the filled areas.
     - edgecolor: Color of the edges (borders) drawn around each stacked area in the streamgraph.
     - edge_linewidth: Width of the edge lines around each stacked area.
     - title: Title of the plot.
