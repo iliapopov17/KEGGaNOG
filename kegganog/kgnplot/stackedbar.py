@@ -39,6 +39,7 @@ def stacked_barplot(
     xticks_color: str = "black",
     xtick_weight: str = "normal",
     xtick_style: str = "normal",
+    background_color="white",
     grid: bool = True,
     grid_linestyle: str = "--",
     grid_alpha: float = 0.7,
@@ -63,6 +64,7 @@ def stacked_barplot(
     - ylabel_fontsize, ylabel_color, ylabel_weight, ylabel_style: Y-axis label styling.
     - xticks_rotation, xticks_ha: Rotation angle and alignment of x-axis tick labels.
     - xticks_fontsize, xticks_color, xticks_weight, xticks_style: X-axis tick label styling.
+    - background_color: Background color of the figure.
     - grid: Whether to display a grid.
     - grid_color, grid_linestyle, grid_linewidth: Grid styling.
     - legend_fontsize: Font size for legend labels.
@@ -93,7 +95,7 @@ def stacked_barplot(
         colors = sns.color_palette(cmap, n_colors=len(df_plot.columns))
 
     # Plot
-    fig, ax = plt.subplots(figsize=figsize)
+    fig, ax = plt.subplots(figsize=figsize, facecolor=background_color)
     df_plot.plot(
         kind="bar",
         stacked=True,
