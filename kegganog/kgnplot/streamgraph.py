@@ -17,6 +17,7 @@ def streamgraph(
     df,
     figsize: Tuple[int, int] = (14, 7),
     cmap: Optional[Union[str, List[str]]] = "tab20",
+    bar_width: float = 0.6,
     fill_alpha: float = 1.0,
     edgecolor: Optional[str] = None,
     edge_linewidth: float = 0.3,
@@ -57,6 +58,7 @@ def streamgraph(
     - df: Pandas DataFrame containing the dataset.
     - figsize: Tuple (width, height) of the figure.
     - cmap: Colormap name (str) or list of colors.
+    - bar_width: Width parameter for bars.
     - fill_alpha: Transparency of the filled areas.
     - edgecolor: Color of the edges (borders) drawn around each stacked area in the streamgraph.
     - edge_linewidth: Width of the edge lines around each stacked area.
@@ -100,9 +102,13 @@ def streamgraph(
     fig, ax = plt.subplots(figsize=figsize, facecolor=background_color)
 
     # Generate stackplot layers
+    centers = np.arange(len(df_plot.index))
+    xs = np.column_stack((centers - bar_width / 2, centers + bar_width / 2)).flatten()
+    ys = np.repeat(df_plot.values.T, 2, axis=1)
+
     layers = ax.stackplot(
-        df_plot.index,
-        df_plot.values.T,
+        xs,
+        ys,
         labels=df_plot.columns,
         colors=colors,
         alpha=fill_alpha,
@@ -148,11 +154,9 @@ def streamgraph(
         ax.grid(axis="x", linestyle=grid_linestyle, alpha=grid_alpha, zorder=0)
 
     # Customize x-ticks
-    positions = np.arange(len(df_plot.index))
-    labels = df_plot.index.tolist()
     plt.xticks(
-        positions,
-        labels,
+        centers,
+        df_plot.index.tolist(),
         rotation=xticks_rotation,
         ha=xticks_ha,
         fontsize=xticks_fontsize,

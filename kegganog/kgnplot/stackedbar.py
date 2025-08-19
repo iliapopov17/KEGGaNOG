@@ -17,6 +17,7 @@ def stacked_barplot(
     df,
     figsize: Tuple[int, int] = (14, 7),
     cmap: Optional[Union[str, List[str]]] = "tab20",
+    bar_width: float = 0.6,
     edgecolor: str = "black",
     edge_linewidth: float = 0.3,
     title: Optional[str] = None,
@@ -56,6 +57,7 @@ def stacked_barplot(
     - df: Pandas DataFrame containing the dataset.
     - figsize: Tuple (width, height) of the figure.
     - cmap: Colormap name (str) or list of colors.
+    - bar_width: Width parameter for bars.
     - edgecolor: Color of the edges (borders) drawn around each stacked area in the stacked barplot.
     - edge_linewidth: Width of the edge lines around each stacked area.
     - title: Title of the plot.
@@ -104,6 +106,7 @@ def stacked_barplot(
         ax=ax,
         edgecolor=edgecolor,
         linewidth=edge_linewidth,
+        width=bar_width,
         zorder=3,
     )
 
