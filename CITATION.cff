@@ -2,7 +2,35 @@ cff-version: 0.7.0
 message: If you use this software, please cite it as below.
 authors:
   - family-names: Popov
-    given-names: Ilia
+    given-names: Ilia V.
+  - family-names: Chikindas
+    given-names: Michael L.
+  - family-names: Venema
+    given-names: Koen
+  - family-names: Ermakov
+    given-names: Alexey M.
+  - family-names: Popov
+    given-names: Igor V.
 title: "KEGGaNOG"
 date-released: 2024-04-26
 url: https://github.com/iliapopov17/KEGGaNOG
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Popov
+      given-names: Ilia V.
+    - family-names: Chikindas
+      given-names: Michael L.
+    - family-names: Venema
+      given-names: Koen
+    - family-names: Ermakov
+      given-names: Alexey M.
+    - family-names: Popov
+      given-names: Igor V.
+  title: "KEGGaNOG: A Lightweight Tool for KEGG Module Profiling From Orthology-Based Annotations"
+  journal: "Molecular Nutrition & Food Research"
+  year: 2025
+  volume: null
+  issue: null
+  pages: e70269
+  doi: "10.1002/mnfr.70269"
