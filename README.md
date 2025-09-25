@@ -89,7 +89,7 @@ These figures are generated using functional groupping mode (`-g`/`--group`) and
 
 |[Stacked Barplot](https://github.com/iliapopov17/KEGGaNOG/wiki/Stacked-Barplot-API)|[Streamgraph](https://github.com/iliapopov17/KEGGaNOG/wiki/Streamgraph-API)|[Stacked Barplot + Streamgraph](https://github.com/iliapopov17/KEGGaNOG/wiki/Combined-Stacked-Barplot-&-Streamgraph)|
 |-------|-------|-------|
-|![kgnstbar_OLD](https://github.com/user-attachments/assets/11e9e265-52c7-41b7-a284-64f3181caac3)|![kgnstream_OLD](https://github.com/user-attachments/assets/03de97f8-d0c0-4ca8-8096-34d846e42ec9)|![combined_white_OLD](https://github.com/user-attachments/assets/f910ae87-e97a-420a-87d1-9b022ef690db)|
+|![kgnstbar_OLD](https://github.com/user-attachments/assets/11e9e265-52c7-41b7-a284-64f3181caac3)|![kgnstream_OLD](https://github.com/user-attachments/assets/e82654fc-478a-4233-8478-f2c69ee4a1a6)|![combined_white_OLD](https://github.com/user-attachments/assets/6059da3c-4b74-47a2-af1c-427180f44845)|
 
 ## Advantages
 
@@ -112,6 +112,15 @@ Contributions are welcome! If you have any ideas, bug fixes, or enhancements, fe
 For any inquiries or support, feel free to contact me via [email](mailto:iljapopov17@gmail.com)
 
 Happy functional annotation! 💻🧬
+
+## Citation
+
+If you use `KEGGaNOG` in your research, please cite:
+
+[Popov, I.V., Chikindas, M.L., Venema, K., Ermakov, A.M. and Popov, I.V., 2025. 
+KEGGaNOG: A Lightweight Tool for KEGG Module Profiling From Orthology-Based Annotations. 
+Molecular Nutrition & Food Research, p.e70269.
+doi.org/10.1002/mnfr.70269](https://doi.org/10.1002/mnfr.70269)
 
 ## Acknowledgements
 
