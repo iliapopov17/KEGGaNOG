@@ -3,6 +3,8 @@ import warnings
 import os
 import shutil
 from pathlib import Path
+import sys
+
 from .processing import data_processing
 from .cheatmaps import simple_heatmap, grouped_heatmap
 from . import kegganog_multi
@@ -10,11 +12,24 @@ from .version import __version__
 
 warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 
+# Citation message
+CITATION_MESSAGE = """
+Thank you for using KEGGaNOG! If you use it in your research, please cite:
+
+    Popov, I.V., Chikindas, M.L., Venema, K., Ermakov, A.M. and Popov, I.V., 2025. 
+    KEGGaNOG: A Lightweight Tool for KEGG Module Profiling From Orthology-Based Annotations. 
+    Molecular Nutrition & Food Research, p.e70269.
+    doi.org/10.1002/mnfr.70269
+"""
+
+
+def print_citation():
+    print(CITATION_MESSAGE, file=sys.stderr)
+
 
 # Main function to run the tool
 def main():
     print("KEGGaNOG by Ilia V. Popov")
-    # Set up argument parser
     parser = argparse.ArgumentParser(
         description="KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization."
     )
@@ -22,19 +37,13 @@ def main():
         "-M",
         "--multi",
         action="store_true",
-        help="“Multi” mode allows to run KEGGaNOG on multiple eggNOG-mapper annotation files (a text file with file location paths must be passed to the input)",
+        help="Run KEGGaNOG in multi mode with multiple eggNOG-mapper annotation files",
     )
     parser.add_argument(
-        "-i",
-        "--input",
-        required=True,
-        help="Path to eggNOG-mapper annotation file",
+        "-i", "--input", required=True, help="Path to eggNOG-mapper annotation file"
     )
     parser.add_argument(
-        "-o",
-        "--output",
-        required=True,
-        help="Output folder to save results",
+        "-o", "--output", required=True, help="Output folder to save results"
     )
     parser.add_argument(
         "-overwrite",
@@ -54,13 +63,13 @@ def main():
         "--color",
         "--colour",
         default="Blues",
-        help="Cmap for seaborn heatmap. Recommended options: Greys, Purples, Blues, Greens, Oranges, Reds (default: Blues)",
+        help="Cmap for seaborn heatmap (default: Blues)",
     )
     parser.add_argument(
         "-n",
         "--name",
         default="SAMPLE",
-        help="Sample name for labeling (default: SAMPLE) (not active in `--multi` mode)",
+        help="Sample name for labeling (default: SAMPLE)",
     )
     parser.add_argument(
         "-g",
@@ -74,55 +83,55 @@ def main():
 
     args = parser.parse_args()
 
-    # Create output and temporary directories
+    try:
+        if os.path.exists(args.output):
+            if not args.overwrite:
+                raise FileExistsError(
+                    f"Output directory '{args.output}' already exists. Use --overwrite to overwrite it."
+                )
+            else:
+                shutil.rmtree(args.output)
 
-    if os.path.exists(args.output):
-        if not args.overwrite:
-            raise FileExistsError(
-                f"Output directory '{args.output}' already exists. Use --overwrite to overwrite it."
-            )
+        os.makedirs(args.output)
+        temp_folder = os.path.join(args.output, "temp_files")
+        os.makedirs(temp_folder, exist_ok=True)
+
+        if args.multi:
+            kegganog_multi.main()
         else:
-            shutil.rmtree(args.output)
-
-    os.makedirs(args.output)
-    temp_folder = os.path.join(args.output, "temp_files")
-    os.makedirs(temp_folder, exist_ok=True)
-
-    if args.multi:
-        kegganog_multi.main()
-    else:
-
-        # Step 1: Parse eggNOG-mapper output
-        parsed_filtered_file = data_processing.parse_emapper(args.input, temp_folder)
-
-        # Step 2: Run KEGG-Decoder
-        kegg_decoder_file = data_processing.run_kegg_decoder(
-            parsed_filtered_file, args.output, args.name
-        )
-
-        # Step 3: Generate the heatmap
-
-        if args.group:
-            # Define group labels, for simplicity let's assume you have them in your dataset
-            grouped_heatmap.generate_grouped_heatmap(
-                kegg_decoder_file, args.output, args.dpi, args.color, args.name
+            parsed_filtered_file = data_processing.parse_emapper(
+                args.input, temp_folder
             )
-        else:
-            # Otherwise, generate a normal heatmap
-            simple_heatmap.generate_heatmap(
-                kegg_decoder_file, args.output, args.dpi, args.color, args.name
+            kegg_decoder_file = data_processing.run_kegg_decoder(
+                parsed_filtered_file, args.output, args.name
             )
 
-    print(f"Heatmap saved in {args.output}/heatmap_figure.png")
+            if args.group:
+                grouped_heatmap.generate_grouped_heatmap(
+                    kegg_decoder_file, args.output, args.dpi, args.color, args.name
+                )
+            else:
+                simple_heatmap.generate_heatmap(
+                    kegg_decoder_file, args.output, args.dpi, args.color, args.name
+                )
 
-    # Get the path to the current directory (same location as the script)
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
+        print(f"Heatmap saved in {args.output}/heatmap_figure.png")
 
-    # Check if __pycache__ exists and remove it
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
+        print_citation()
+
+    finally:
+        # Remove __pycache__ on exit (also runs on Ctrl+C)
+        current_dir = Path(__file__).resolve().parent
+        pycache_dir = current_dir / "__pycache__"
+        if pycache_dir.exists() and pycache_dir.is_dir():
+            shutil.rmtree(pycache_dir)
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        # Print citation also when user interrupts
+        print("\nExecution interrupted by user.", file=sys.stderr)
+        print_citation()
+        sys.exit(1)
