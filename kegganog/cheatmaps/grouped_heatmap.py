@@ -447,17 +447,16 @@ def generate_grouped_heatmap(
 
         # Adjusting function labels to the right
         for ax in axes:
-            ax.yaxis.tick_right()  # Move y-ticks to the right
-            ax.set_yticklabels(
-                ax.get_yticklabels(), rotation=0, va="center", ha="left"
-            )  # Align labels
+            ax.yaxis.tick_right()
+            ax.set_yticklabels(ax.get_yticklabels(), rotation=0, va="center", ha="left")
 
         # Layout adjustments
         plt.tight_layout(rect=[0, 0, 0.9, 1])
-        output_file = os.path.join(output_folder, "heatmap_figure.png")
-        with tqdm(total=1, desc="Saving plot") as pbar:
-            plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
-            pbar.update(1)
-        plt.show()
+
+    output_file = os.path.join(output_folder, "heatmap_figure.png")
+    with tqdm(total=1, desc="Saving plot") as pbar:
+        plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
+        pbar.update(1)
+    plt.show()
 
     return fig, axes
