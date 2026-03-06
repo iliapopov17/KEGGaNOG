@@ -14,7 +14,15 @@ def parse_emapper(input_file, sample_folder, file_prefix):
 
     # Read the input file with progress bar
     with tqdm(total=1, desc=f"Reading {file_prefix}") as pbar:
-        df_filtered = pd.read_csv(input_file, sep="\t", skiprows=4)
+
+        header_row = next(
+            i
+            for i, line in enumerate(open(input_file))
+            if line.strip() and not line.startswith("##")
+        )
+
+        df_filtered = pd.read_csv(input_file, sep="\t", skiprows=header_row, header=0)
+
         pbar.update(1)
 
     # Check if 'KEGG_ko' column exists

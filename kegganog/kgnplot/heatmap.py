@@ -1,7 +1,7 @@
-from kegganog.simple_heatmap import generate_heatmap
-from kegganog.grouped_heatmap import generate_grouped_heatmap
-from kegganog.simple_heatmap_multi import generate_heatmap_multi
-from kegganog.grouped_heatmap_multi import generate_grouped_heatmap_multi
+from kegganog.cheatmaps.simple_heatmap import generate_heatmap
+from kegganog.cheatmaps.grouped_heatmap import generate_grouped_heatmap
+from kegganog.cheatmaps.simple_heatmap_multi import generate_heatmap_multi
+from kegganog.cheatmaps.grouped_heatmap_multi import generate_grouped_heatmap_multi
 import tempfile
 import os
 import pandas as pd
