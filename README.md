@@ -35,8 +35,7 @@
 
 ```bash
 # Linux / WSL / macOS
-conda create -n kegganog python=3.12 pip -y
-# IMPORTANT: FOR NOW KEGGaNOG SUPPORTS PYTHON<3.14, PLEASE USE 3.12 OR 3.10
+conda create -n kegganog pip -y
 conda activate kegganog
 pip install kegganog
 ```
