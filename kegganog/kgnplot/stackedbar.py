@@ -5,7 +5,7 @@ import numpy as np
 from typing import Optional, Tuple, Union, List
 from pathlib import Path
 import shutil
-from kegganog.grouped_heatmap import function_groups
+from kegganog.cheatmaps.grouped_heatmap import function_groups
 from .base import KgnPlotBase
 
 
