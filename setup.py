@@ -47,6 +47,10 @@ setup(
     author_email="iljapopov17@gmail.com",
     url="https://github.com/iliapopov17/KEGGaNOG",
     packages=find_packages(),
+    include_package_data=True,
+    package_data={
+        "kegganog": ["static/**/*"],
+    },
     cmdclass={"install": CustomInstallCommand},
     entry_points={
         "console_scripts": [
