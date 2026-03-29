@@ -1,6 +1,7 @@
 include LICENSE
 include README_PyPI.md
 include requirements.txt
+recursive-include kegganog/static *
 exclude demo_data/*
 exclude imgs/*.png
 exclude imgs/Layout/*

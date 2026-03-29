@@ -1,0 +1,75 @@
+/* =====================================================================
+   HEADER — Liquid Glass nav bar
+===================================================================== */
+.app-header {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  height: var(--header-h);
+  background: rgba(255,255,255,0.72);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255,255,255,0.6);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.06), var(--shadow-sm);
+  display: flex; align-items: center;
+  padding: 0 24px; gap: 20px;
+}
+
+/* Logo */
+.header-logo {
+  display: flex; align-items: center; gap: 10px;
+  text-decoration: none; color: var(--text); flex-shrink: 0;
+}
+.header-logo-icon {
+  height: 32px; width: auto;
+}
+.header-logo-text { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+.header-logo-version {
+  font-size: 11px; font-weight: 500; color: var(--text-3);
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: 4px; padding: 1px 6px; margin-left: 2px;
+}
+
+.header-spacer { flex: 1; }
+.header-nav { display: flex; align-items: center; gap: 8px; }
+
+/* Generic nav link */
+.nav-link {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  font-size: 13px; font-weight: 500; color: var(--text-2);
+  text-decoration: none;
+  transition: background var(--transition), color var(--transition);
+  white-space: nowrap;
+}
+.nav-link:hover { background: rgba(0,0,0,0.05); color: var(--text); }
+.nav-link svg { flex-shrink: 0; }
+
+/* GitHub compound button */
+.nav-github {
+  display: flex; align-items: center;
+  border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+  overflow: hidden; font-size: 13px; font-weight: 500; text-decoration: none;
+  transition: box-shadow var(--transition);
+}
+.nav-github:hover { box-shadow: var(--shadow-sm); }
+.nav-github-main {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px; background: var(--surface); color: var(--text);
+  border-right: 1px solid var(--border-strong);
+}
+.nav-github-stars {
+  display: flex; align-items: center; gap: 4px;
+  padding: 5px 10px; background: var(--surface-2); color: var(--text-2);
+}
+.star-icon { color: #f59e0b; }
+
+/* Paper gradient button */
+.nav-paper {
+  display: flex; align-items: center; gap: 6px;
+  padding: 6px 12px; border-radius: var(--radius-sm);
+  background: linear-gradient(135deg, #2563eb, #7c3aed);
+  color: #fff; font-size: 13px; font-weight: 500;
+  text-decoration: none;
+  transition: opacity var(--transition), box-shadow var(--transition);
+  white-space: nowrap;
+}
+.nav-paper:hover { opacity: 0.9; box-shadow: 0 2px 8px rgba(37,99,235,0.35); }

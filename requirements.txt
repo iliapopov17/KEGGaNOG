@@ -8,3 +8,6 @@ seaborn>=0.13.2,<=0.13.2
 tanglegram>=0.2.0,<=0.2.0
 tqdm>=4.67.1,<=4.67.1
 networkx>=3.4.2,<=3.6.1
+fastapi>=0.110.0
+uvicorn[standard]>=0.29.0
+python-multipart>=0.0.9

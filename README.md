@@ -42,6 +42,8 @@ pip install kegganog
 
 ## Usage Guide
 
+### Command-line mode
+
 ```
 usage: KEGGaNOG [-h] [-M] -i INPUT -o OUTPUT [-overwrite] [-dpi DPI]
                 [-c COLOR] [-n NAME] [-g] [-V]
@@ -70,6 +72,24 @@ options:
 ```
 
 🔗 Please visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
+
+
+### Web interface mode
+
+For an interactive, browser-based experience with live preview and advanced visualization options:
+
+```bash
+kegganog --web
+```
+
+Then open `http://localhost:8000` in your browser.
+
+**Features:**
+- **Live preview** — visualize plots in real-time as you adjust parameters
+- **Interactive settings** — no command-line arguments needed; drop files, tweak colors and dimensions through an intuitive UI
+- **Multi-sample analysis** — compare samples using heatmaps, radarplots, correlation networks, stacked bars, and streamgraphs
+- **Re-render on the fly** — modify plot parameters without re-running the full analysis (multi mode only)
+- **Download results** — export individual plots or the complete results ZIP
 
 ## Output examples gallery
 
@@ -120,7 +140,7 @@ If you use `KEGGaNOG` in your research, please cite:
 [Popov, I.V., Chikindas, M.L., Venema, K., Ermakov, A.M. and Popov, I.V., 2025. 
 KEGGaNOG: A Lightweight Tool for KEGG Module Profiling From Orthology-Based Annotations. 
 Molecular Nutrition & Food Research, p.e70269.
-doi.org/10.1002/mnfr.70269](https://onlinelibrary.wiley.com/doi/epdf/10.1002/mnfr.70269?domain=author&token=QAEWYFJAQ6TAZGDW6FJZ)
+doi.org/10.1002/mnfr.70269](https://onlinelibrary.wiley.com/share/author/QAEWYFJAQ6TAZGDW6FJZ?target=10.1002/mnfr.70269)
 
 ## Acknowledgements
 
