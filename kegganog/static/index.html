@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KEGGaNOG</title>
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/header.css">
+  <link rel="stylesheet" href="/static/css/layout.css">
+  <link rel="stylesheet" href="/static/css/left-panel.css">
+  <link rel="stylesheet" href="/static/css/center-panel.css">
+  <link rel="stylesheet" href="/static/css/right-panel.css">
+  <link rel="stylesheet" href="/static/css/utils.css">
+</head>
+<body>
+
+<!-- ======================================================================
+     HEADER
+====================================================================== -->
+<header class="app-header">
+  <a class="header-logo" href="#">
+    <img class="header-logo-icon" src="/static/imgs/KaN_logo_light.png" alt="KEGGaNOG logo">
+    <span class="header-logo-text">KEGGaNOG</span>
+    <span class="header-logo-version">v__VERSION__</span>
+  </a>
+
+  <div class="header-spacer"></div>
+
+  <nav class="header-nav">
+    <a class="nav-paper" href="https://onlinelibrary.wiley.com/share/author/QAEWYFJAQ6TAZGDW6FJZ?target=10.1002/mnfr.70269" target="_blank">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+      </svg>
+      Full-text paper
+    </a>
+
+    <a class="nav-github" href="https://github.com/iliapopov17/KEGGaNOG" target="_blank">
+      <span class="nav-github-main">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577
+            0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61-.546-1.385-1.335-1.755-1.335-1.755
+            -1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305
+            3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93
+            0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176
+            0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405
+            1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23
+            .645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22
+            0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22
+            0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57
+            C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/>
+        </svg>
+        GitHub
+      </span>
+      <span class="nav-github-stars">
+        <span class="star-icon">★</span>
+        <span id="gh-stars">—</span>
+      </span>
+    </a>
+  </nav>
+</header>
+
+<!-- ======================================================================
+     3-PANEL BODY
+====================================================================== -->
+<div class="app-body">
+
+  <!-- ============================================================
+       LEFT PANEL — upload + heatmap settings
+  ============================================================ -->
+  <aside class="panel-left">
+
+    <details class="about-spoiler">
+      <summary>What is KEGGaNOG?</summary>
+      <div class="about-body">
+        <p>KEGGaNOG takes <strong>eggNOG-mapper v2</strong> annotation files and computes <strong>KEGG pathway completeness scores</strong>, producing publication-ready visualizations.</p>
+        <p><strong>Input files:</strong> <code>.emapper.annotations</code> (tab-separated output of eggNOG-mapper v2). One file = one sample.</p>
+        <p><strong>Single mode</strong> — one sample → heatmap + barplot.<br>
+           <strong>Multi mode</strong> — multiple samples → heatmap, radarplot, correlation network, stacked bar, streamgraph.</p>
+      </div>
+    </details>
+
+    <div>
+      <div class="left-section-title">Analysis mode</div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-single" onclick="switchMode('single')">Single</button>
+        <button class="mode-btn"        id="mode-multi"  onclick="switchMode('multi')">Multi</button>
+      </div>
+    </div>
+
+    <!-- Single: file upload -->
+    <div id="left-single">
+      <div class="left-section-title" style="margin-bottom:6px;">Input file</div>
+      <div class="drop-zone" id="drop-zone-single">
+        <span class="drop-zone-icon">📂</span>
+        Drop .annotations file here
+        <div class="drop-hint">or click to browse</div>
+      </div>
+      <input type="file" id="file-input-single" accept=".annotations,.tsv,.txt">
+    </div>
+
+    <!-- Multi: folder upload -->
+    <div id="left-multi" class="hidden">
+      <div class="info-banner">
+        <span class="info-banner-icon">⚠️</span>
+        <span>Best with <strong>10–15 samples</strong>. Larger sets — split into batches.</span>
+      </div>
+      <div class="left-section-title" style="margin-bottom:6px;">Input folder</div>
+      <div class="drop-zone" id="drop-zone-multi">
+        <span class="drop-zone-icon">📁</span>
+        Drop folder with .annotations files
+        <div class="drop-hint">or click to browse folder</div>
+      </div>
+      <input type="file" id="file-input-multi" webkitdirectory>
+    </div>
+
+    <hr class="divider">
+
+    <!-- Heatmap settings -->
+    <div>
+      <div class="left-section-title">Heatmap settings</div>
+
+      <div id="left-params-single">
+        <div class="param-row" style="margin-bottom:8px;">
+          <label>Sample name</label>
+          <input type="text" id="single-sample-name" value="SAMPLE" maxlength="64">
+        </div>
+        <div class="param-row" style="margin-bottom:8px;">
+          <label>Color scheme</label>
+          <select id="single-color">
+            <option value="Blues" selected>Blues</option>
+            <option value="Greens">Greens</option>
+            <option value="Reds">Reds</option>
+            <option value="Purples">Purples</option>
+            <option value="Greys">Greys</option>
+            <option value="Oranges">Oranges</option>
+          </select>
+        </div>
+        <div class="param-row" style="margin-bottom:8px;">
+          <label>DPI (72–600)</label>
+          <input type="number" id="single-dpi" value="300" min="72" max="600">
+        </div>
+        <div class="check-row">
+          <input type="checkbox" id="single-group">
+          <label for="single-group">Group by functional category</label>
+        </div>
+      </div>
+
+      <div id="left-params-multi" class="hidden">
+        <div class="param-row" style="margin-bottom:8px;">
+          <label>Color scheme</label>
+          <select id="multi-color">
+            <option value="Blues" selected>Blues</option>
+            <option value="Greens">Greens</option>
+            <option value="Reds">Reds</option>
+            <option value="Purples">Purples</option>
+            <option value="Greys">Greys</option>
+            <option value="Oranges">Oranges</option>
+          </select>
+        </div>
+        <div class="param-row" style="margin-bottom:8px;">
+          <label>DPI (72–600)</label>
+          <input type="number" id="multi-dpi" value="300" min="72" max="600">
+        </div>
+        <div class="check-row">
+          <input type="checkbox" id="multi-group">
+          <label for="multi-group">Group by functional category</label>
+        </div>
+      </div>
+    </div>
+
+    <div style="flex:1;"></div>
+
+    <div class="status-bar" id="status-bar">
+      <div class="spinner" id="status-spinner"></div>
+      <span id="status-text">Running analysis…</span>
+    </div>
+
+    <button class="btn-run" id="btn-run" onclick="submitJob()">Run analysis</button>
+
+  </aside>
+
+  <!-- ============================================================
+       CENTER PANEL — results / plots
+  ============================================================ -->
+  <main class="panel-center" id="panel-center">
+
+    <div class="center-placeholder" id="center-placeholder">
+      <div class="center-placeholder-icon">🧬</div>
+      <h2>No results yet</h2>
+      <p>Upload an annotation file and click <strong>Run analysis</strong> to get started.</p>
+    </div>
+
+    <div id="center-results" class="hidden">
+
+      <div class="subtabs-bar" id="subtabs-bar"></div>
+
+      <!-- Heatmap tab -->
+      <div class="subtab-panel" id="stab-heatmap">
+        <div id="heatmap-single-result">
+          <div class="result-img-wrap">
+            <img id="result-img-single" src="" alt="Heatmap">
+          </div>
+        </div>
+        <div id="heatmap-multi-result" class="hidden">
+          <details class="img-spoiler" id="heatmap-spoiler">
+            <summary>Preview heatmap (large — click to expand)</summary>
+            <div class="result-img-wrap">
+              <img id="result-img-multi" src="" alt="Heatmap">
+            </div>
+          </details>
+        </div>
+        <div class="result-actions">
+          <a id="dl-heatmap-zip" class="btn-dl" href="#" download>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download results (.zip)
+          </a>
+        </div>
+        <div id="heatmap-rerender" class="hidden mt-12">
+          <div class="viz-status" id="viz-status-heatmap"></div>
+          <img id="viz-img-heatmap" src="" alt="Re-rendered heatmap"
+               style="display:none;width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:12px;">
+          <div class="result-actions">
+            <button class="btn-generate" id="btn-rerender-heatmap" onclick="runViz('heatmap')">
+              Re-render with current settings
+            </button>
+            <a id="dl-heatmap-png" class="btn-dl hidden" href="#" download>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              Download PNG
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Barplot tab (single only) -->
+      <div class="subtab-panel" id="stab-barplot">
+        <div class="viz-status" id="viz-status-barplot"></div>
+        <img id="viz-img-barplot" src="" alt="Barplot"
+             style="display:none;width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:12px;">
+        <div class="result-actions">
+          <button class="btn-generate" id="btn-viz-barplot" onclick="runViz('barplot')">Generate barplot</button>
+          <a id="dl-barplot" class="btn-dl hidden" href="#" download>
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>
+            </svg>
+            Download PNG
+          </a>
+        </div>
+      </div>
+
+      <!-- Radarplot tab (multi only) -->
+      <div class="subtab-panel" id="stab-radarplot">
+        <div class="viz-status" id="viz-status-radarplot"></div>
+        <img id="viz-img-radarplot" src="" alt="Radarplot"
+             style="display:none;width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:12px;">
+        <div class="result-actions">
+          <button class="btn-generate" id="btn-viz-radarplot" onclick="runViz('radarplot')">Generate radarplot</button>
+          <a id="dl-radarplot" class="btn-dl hidden" href="#" download>Download PNG</a>
+        </div>
+      </div>
+
+      <!-- Corrnet tab (multi only) -->
+      <div class="subtab-panel" id="stab-corrnet">
+        <div class="viz-status" id="viz-status-corrnet"></div>
+        <img id="viz-img-corrnet" src="" alt="Correlation network"
+             style="display:none;width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:12px;">
+        <div class="result-actions">
+          <button class="btn-generate" id="btn-viz-corrnet" onclick="runViz('corrnet')">Generate correlation network</button>
+          <a id="dl-corrnet" class="btn-dl hidden" href="#" download>Download PNG</a>
+        </div>
+      </div>
+
+      <!-- Stacked barplot tab (multi only) -->
+      <div class="subtab-panel" id="stab-stackedbar">
+        <div class="viz-status" id="viz-status-stackedbar"></div>
+        <img id="viz-img-stackedbar" src="" alt="Stacked barplot"
+             style="display:none;width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:12px;">
+        <div class="result-actions">
+          <button class="btn-generate" id="btn-viz-stackedbar" onclick="runViz('stackedbar')">Generate stacked barplot</button>
+          <a id="dl-stackedbar" class="btn-dl hidden" href="#" download>Download PNG</a>
+        </div>
+      </div>
+
+      <!-- Streamgraph tab (multi only) -->
+      <div class="subtab-panel" id="stab-streamgraph">
+        <div class="viz-status" id="viz-status-streamgraph"></div>
+        <img id="viz-img-streamgraph" src="" alt="Streamgraph"
+             style="display:none;width:100%;border-radius:var(--radius-lg);border:1px solid var(--border);margin-bottom:12px;">
+        <div class="result-actions">
+          <button class="btn-generate" id="btn-viz-streamgraph" onclick="runViz('streamgraph')">Generate streamgraph</button>
+          <a id="dl-streamgraph" class="btn-dl hidden" href="#" download>Download PNG</a>
+        </div>
+      </div>
+
+    </div><!-- /center-results -->
+  </main>
+
+  <!-- ============================================================
+       RIGHT PANEL — parameters for active sub-tab
+  ============================================================ -->
+  <aside class="panel-right" id="panel-right">
+    <div class="right-title">Parameters</div>
+    <div id="right-content">
+      <p style="font-size:12px;color:var(--text-3);">Run an analysis to see plot parameters here.</p>
+    </div>
+  </aside>
+
+</div><!-- /app-body -->
+
+<!-- JS modules — order: state → ui → upload → templates → right-panel → subtabs → analysis → viz → init -->
+<script src="/static/js/state.js"></script>
+<script src="/static/js/ui.js"></script>
+<script src="/static/js/upload.js"></script>
+<script src="/static/js/templates.js"></script>
+<script src="/static/js/right-panel.js"></script>
+<script src="/static/js/subtabs.js"></script>
+<script src="/static/js/analysis.js"></script>
+<script src="/static/js/viz.js"></script>
+<script>switchMode("single");</script>
+</body>
+</html>
