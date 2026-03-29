@@ -1,0 +1,48 @@
+/* =====================================================================
+   LAYOUT — 3-panel grid, exact viewport height (no ghost scrolling)
+===================================================================== */
+html, body { height: 100%; overflow: hidden; }
+
+.app-body {
+  display: grid;
+  grid-template-columns: var(--left-w) 1fr var(--right-w);
+  height: calc(100vh - var(--header-h));
+  margin-top: var(--header-h);
+}
+
+/* LEFT — sticky scrollable sidebar */
+.panel-left {
+  height: 100%;
+  overflow-y: auto; overflow-x: hidden;
+  border-right: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px 16px;
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+/* CENTER — only this panel can scroll vertically */
+.panel-center {
+  height: 100%;
+  overflow-y: auto; overflow-x: hidden;
+  padding: 24px 28px;
+}
+
+/* RIGHT — sticky scrollable sidebar */
+.panel-right {
+  height: 100%;
+  overflow-y: auto;
+  border-left: 1px solid var(--border);
+  background: var(--surface);
+  padding: 20px 16px;
+}
+
+/* Thin scrollbars */
+.panel-left::-webkit-scrollbar,
+.panel-center::-webkit-scrollbar,
+.panel-right::-webkit-scrollbar { width: 4px; }
+.panel-left::-webkit-scrollbar-track,
+.panel-center::-webkit-scrollbar-track,
+.panel-right::-webkit-scrollbar-track { background: transparent; }
+.panel-left::-webkit-scrollbar-thumb,
+.panel-center::-webkit-scrollbar-thumb,
+.panel-right::-webkit-scrollbar-thumb { background: #d0d0ca; border-radius: 2px; }
