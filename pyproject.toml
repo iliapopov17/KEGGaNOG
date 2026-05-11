@@ -1,6 +1,48 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel>=0.42", "requests>=2.28.0,<3"]
+requires = ["setuptools>=61.0", "wheel>=0.42"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "kegganog"
+dynamic = ["version"]
+description = "A tool for generating KEGG heatmaps from eggNOG-mapper outputs."
+readme = {file = "README_PyPI.md", content-type = "text/markdown"}
+license = {file = "LICENSE"}
+authors = [{name = "Ilia Popov", email = "iljapopov17@gmail.com"}]
+requires-python = ">=3.10,<=3.16"
+dependencies = [
+    "pydantic>=2.9.0,<3",
+    "matplotlib>=3.10.0,<=3.10.8",
+    "numpy>=2.2.0,<=2.4.0",
+    "pandas>=2.2.3,<=2.3.3",
+    "plotly>=5.24.1,<=6.5.0",
+    "pyparsing>=3.2.0,<=3.3.1",
+    "scipy>=1.14.1,<=1.16.3",
+    "seaborn>=0.13.2,<=0.13.2",
+    "tanglegram>=0.2.0,<=0.2.0",
+    "tqdm>=4.67.1,<=4.67.1",
+    "networkx>=3.4.2,<=3.6.1",
+    "fastapi>=0.110.0",
+    "uvicorn[standard]>=0.29.0",
+    "python-multipart>=0.0.9",
+    "requests>=2.28.0,<3",
+]
+
+[project.urls]
+Homepage = "https://github.com/iliapopov17/KEGGaNOG"
+
+[project.scripts]
+KEGGaNOG = "kegganog.kegganog:main"
+kegganog = "kegganog.kegganog:main"
+
+[tool.setuptools.dynamic]
+version = {attr = "kegganog.version.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools.package-data]
+kegganog = ["static/**/*"]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

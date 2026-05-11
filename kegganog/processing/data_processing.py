@@ -9,6 +9,32 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
+_SCRIPT_URL = (
+    "https://raw.githubusercontent.com/bjtully/BioData/master/KEGGDecoder/KEGG_decoder.py"
+)
+_REQUEST_TIMEOUT = 10
+
+
+def _ensure_kegg_decoder(script_path: Path) -> None:
+    """Download KEGG_decoder.py on first use if not already present."""
+    if script_path.exists():
+        return
+
+    print(f"KEGG_decoder.py not found. Downloading from:\n  {_SCRIPT_URL}")
+    try:
+        import requests
+
+        response = requests.get(_SCRIPT_URL, timeout=_REQUEST_TIMEOUT)
+        response.raise_for_status()
+        script_path.write_bytes(response.content)
+        print(f"Downloaded KEGG_decoder.py ({script_path.stat().st_size} bytes).")
+    except Exception as exc:
+        raise RuntimeError(
+            f"Failed to download KEGG_decoder.py: {exc}\n"
+            f"Download it manually from:\n  {_SCRIPT_URL}\n"
+            f"and place it at:\n  {script_path}"
+        ) from exc
+
 
 def parse_emapper(input_file: str, temp_folder: str) -> str:
 
@@ -68,6 +94,7 @@ def run_kegg_decoder(input_file: str, output_folder: str, sample_name: str) -> s
 
     package_dir = Path(__file__).resolve().parent  # Directory of the current script
     kegg_decoder_script = package_dir / "KEGG_decoder.py"
+    _ensure_kegg_decoder(kegg_decoder_script)
 
     # Run KEGG-Decoder via subprocess with progress bar
     with tqdm(total=1, desc="Decoding KO terms") as pbar:
