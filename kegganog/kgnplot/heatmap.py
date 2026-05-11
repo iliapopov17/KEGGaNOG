@@ -75,6 +75,8 @@ def heatmap(
         df.to_csv(temp_file, sep="\t", index=False)
         temp_file_path = temp_file.name
 
+    color = color or "Blues"
+
     is_single = df.shape[0] == 1
     is_multi = df.shape[0] > 1
 

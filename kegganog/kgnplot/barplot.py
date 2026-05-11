@@ -71,6 +71,7 @@ def barplot(
 
     # Load and process data
     df = df.drop(columns=["Function"], errors="ignore")
+    df = df.select_dtypes(include="number")
     df = df.loc[:, (df > 0).any(axis=0)]
     df_melted = df.melt(var_name="Pathway", value_name="Score")
 
