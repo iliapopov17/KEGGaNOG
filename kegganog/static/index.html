@@ -14,6 +14,28 @@
 </head>
 <body>
 
+<!-- Suggested matplotlib colormap names (paired with list= on text inputs). -->
+<datalist id="matplotlib-named-cmaps">
+  <option value="viridis"></option>
+  <option value="plasma"></option>
+  <option value="inferno"></option>
+  <option value="magma"></option>
+  <option value="cividis"></option>
+  <option value="Greens"></option>
+  <option value="Blues"></option>
+  <option value="Reds"></option>
+  <option value="Purples"></option>
+  <option value="Oranges"></option>
+  <option value="Greys"></option>
+  <option value="coolwarm"></option>
+  <option value="RdYlBu"></option>
+  <option value="Spectral"></option>
+  <option value="tab10"></option>
+  <option value="tab20"></option>
+  <option value="Set2"></option>
+  <option value="Pastel1"></option>
+</datalist>
+
 <!-- ======================================================================
      HEADER
 ====================================================================== -->
@@ -314,7 +336,8 @@
 
 </div><!-- /app-body -->
 
-<!-- JS modules — order: state → ui → upload → templates → right-panel → subtabs → analysis → viz → init -->
+<!-- JS modules — order: security → state → … -->
+<script src="/static/js/security.js"></script>
 <script src="/static/js/state.js"></script>
 <script src="/static/js/ui.js"></script>
 <script src="/static/js/upload.js"></script>

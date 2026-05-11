@@ -9,7 +9,6 @@ import shutil
 from pathlib import Path
 import contextlib
 import sys
-import os
 import io
 import matplotlib.pyplot as plt
 from .base import KgnPlotBase
@@ -76,6 +75,8 @@ def heatmap(
         df.to_csv(temp_file, sep="\t", index=False)
         temp_file_path = temp_file.name
 
+    color = color or "Blues"
+
     is_single = df.shape[0] == 1
     is_multi = df.shape[0] > 1
 
@@ -119,12 +120,6 @@ def heatmap(
             )
 
     shutil.rmtree(output_folder, ignore_errors=True)
-
-    # Clean up __pycache__
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
 
     plt.close(fig)
 

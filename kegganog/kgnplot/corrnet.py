@@ -147,14 +147,6 @@ def correlation_network(
         correlation_matrix.to_csv(save_matrix, sep="\t")
         print(f"Correlation matrix saved as {save_matrix}")
 
-    # Get the path to the current directory (same location as the script)
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-
-    # Check if __pycache__ exists and remove it
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
-
     plt.close(fig)
 
     return KgnCorrnet(fig, ax)

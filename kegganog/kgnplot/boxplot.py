@@ -126,12 +126,5 @@ def boxplot(
     if grid:
         plt.grid(color=grid_color, linestyle=grid_linestyle, linewidth=grid_linewidth)
 
-    # Clean up __pycache__
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
-
     plt.close(fig)
-
     return KgnBoxplot(fig, ax)

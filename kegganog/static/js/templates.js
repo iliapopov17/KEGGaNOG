@@ -56,7 +56,7 @@
           <summary>Main</summary>
           <div class="right-spoiler-body">
             <div class="params-grid-2">
-              <div class="param-cell"><label>Colormap</label><input type="text" id="bp-cmap" value="Greens" placeholder="Greens, viridis…"></div>
+              <div class="param-cell"><label>Colormap</label><input type="text" id="bp-cmap" value="Greens" list="matplotlib-named-cmaps" placeholder="Pick or type a matplotlib name"></div>
               <div class="param-cell"><label>Sort order</label><select id="bp-sort"><option value="descending" selected>Descending</option><option value="ascending">Ascending</option></select></div>
               <div class="param-cell"><label>Cmap range min</label><input type="number" id="bp-cmap-min" value="8"></div>
               <div class="param-cell"><label>Cmap range max</label><input type="number" id="bp-cmap-max" value="30"></div>
@@ -191,7 +191,7 @@
               <div class="param-cell"><label>Node color</label><input type="text" id="cn-node-color" value="#A3D5FF"></div>
               <div class="param-cell"><label>Node edge color</label><input type="text" id="cn-node-ec" value="#03045E"></div>
               <div class="param-cell"><label>Node edge width</label><input type="number" id="cn-node-lw" value="1.5" step="0.5"></div>
-              <div class="param-cell"><label>Edge colormap</label><input type="text" id="cn-edge-cmap" value="coolwarm"></div>
+              <div class="param-cell"><label>Edge colormap</label><input type="text" id="cn-edge-cmap" value="coolwarm" list="matplotlib-named-cmaps" placeholder="e.g. coolwarm"></div>
               <div class="param-cell"><label>Colorbar size</label><input type="number" id="cn-cbar" value="0.5" step="0.05"></div>
               <div class="param-cell"><label>Title</label><input type="text" id="cn-title" placeholder="optional"></div>
               <div class="param-cell"><label>Background</label><input type="text" id="cn-bg" value="white"></div>

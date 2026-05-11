@@ -3,6 +3,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import asyncio
+import os
 import shutil
 import tempfile
 import uuid
@@ -16,8 +17,9 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
+from importlib.metadata import version as _metadata_version
+
 from .schemas import JobStatus, WebParams
-from .version import __version__
 
 # ---------------------------------------------------------------------------
 # FastAPI application instance
@@ -25,7 +27,7 @@ from .version import __version__
 
 app = FastAPI(
     title="KEGGaNOG",
-    version=__version__,
+    version=_metadata_version("kegganog"),
     docs_url=None,
     redoc_url=None,
 )
@@ -47,6 +49,63 @@ app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 _jobs: dict[str, dict] = {}
 
+# Upload limits (DoS mitigation). Adjust if legitimate eggNOG outputs exceed this.
+MAX_UPLOAD_BYTES_SINGLE = 80 * 1024 * 1024
+MAX_UPLOAD_BYTES_PER_MULTI_FILE = 80 * 1024 * 1024
+MAX_MULTI_UPLOAD_FILES = 64
+MAX_MULTI_BATCH_BYTES = 400 * 1024 * 1024
+
+_ALLOWED_PLOT_TYPES = frozenset(
+    {"barplot", "corrnet", "radarplot", "stackedbar", "streamgraph", "heatmap"}
+)
+
+
+def _secure_temp_path(suffix: str) -> Path:
+    """Return a closed temp file path (avoids deprecated tempfile.mktemp)."""
+    fd, path = tempfile.mkstemp(suffix=suffix)
+    os.close(fd)
+    return Path(path)
+
+
+def _safe_client_filename(filename: str | None) -> str:
+    """
+    Reduce path-traversal / odd names from multipart uploads to a single basename.
+
+    eggNOG-mapper files are typically like ``sample.emapper.annotations``; we only
+    keep the last path segment and drop empty or dot-only names.
+    """
+    raw = (filename or "").strip() or "sample.annotations"
+    base = Path(raw).name
+    if not base or base in {".", ".."}:
+        base = "sample.annotations"
+    return base
+
+
+async def _read_upload_with_limit(upload: UploadFile, max_bytes: int) -> bytes:
+    chunks: list[bytes] = []
+    total = 0
+    chunk_size = 1024 * 1024
+    while True:
+        chunk = await upload.read(chunk_size)
+        if not chunk:
+            break
+        total += len(chunk)
+        if total > max_bytes:
+            raise ValueError(
+                f"Uploaded file exceeds maximum size ({max_bytes // (1024 * 1024)} MiB)."
+            )
+        chunks.append(chunk)
+    return b"".join(chunks)
+
+
+def _normalize_job_id(job_id: str) -> str | None:
+    """Return canonical job id string or None if not a valid UUID."""
+    try:
+        return str(uuid.UUID(job_id))
+    except ValueError:
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Route 1: serve the HTML interface
 # ---------------------------------------------------------------------------
@@ -54,9 +113,8 @@ _jobs: dict[str, dict] = {}
 
 @app.get("/", response_class=HTMLResponse)
 async def index() -> HTMLResponse:
-    from .version import __version__
     html_file = Path(__file__).parent / "static" / "index.html"
-    html = html_file.read_text(encoding="utf-8").replace("__VERSION__", __version__)
+    html = html_file.read_text(encoding="utf-8").replace("__VERSION__", _metadata_version("kegganog"))
     return HTMLResponse(html)
 
 
@@ -79,7 +137,11 @@ async def run_analysis(
         messages = [f"{err['loc'][0]}: {err['msg']}" for err in e.errors()]
         return JSONResponse(status_code=422, content={"detail": messages})
 
-    file_bytes = await file.read()
+    try:
+        file_bytes = await _read_upload_with_limit(file, MAX_UPLOAD_BYTES_SINGLE)
+    except ValueError as e:
+        return JSONResponse(status_code=413, content={"detail": [str(e)]})
+
     job_id = str(uuid.uuid4())
     _jobs[job_id] = {
         "status": "pending", "path": None, "png_path": None,
@@ -105,6 +167,13 @@ async def run_analysis_multi(
         return JSONResponse(
             status_code=422, content={"detail": ["files: at least one file required."]}
         )
+    if len(files) > MAX_MULTI_UPLOAD_FILES:
+        return JSONResponse(
+            status_code=413,
+            content={
+                "detail": [f"Too many files (max {MAX_MULTI_UPLOAD_FILES})."],
+            },
+        )
     try:
         params = WebParams(dpi=dpi, color=color, sample_name="MULTI", group=group)
     except ValidationError as e:
@@ -112,8 +181,19 @@ async def run_analysis_multi(
         return JSONResponse(status_code=422, content={"detail": messages})
 
     named_files: list[tuple[str, bytes]] = []
+    batch_total = 0
     for f in files:
-        named_files.append((f.filename or "sample.annotations", await f.read()))
+        try:
+            data = await _read_upload_with_limit(f, MAX_UPLOAD_BYTES_PER_MULTI_FILE)
+        except ValueError as e:
+            return JSONResponse(status_code=413, content={"detail": [str(e)]})
+        batch_total += len(data)
+        if batch_total > MAX_MULTI_BATCH_BYTES:
+            return JSONResponse(
+                status_code=413,
+                content={"detail": ["Total upload size exceeds server limit."]},
+            )
+        named_files.append((_safe_client_filename(f.filename), data))
 
     job_id = str(uuid.uuid4())
     _jobs[job_id] = {
@@ -131,12 +211,13 @@ async def run_analysis_multi(
 
 @app.get("/status/{job_id}", response_model=None)
 async def get_status(job_id: str):
-    job = _jobs.get(job_id)
+    nid = _normalize_job_id(job_id)
+    if nid is None:
+        return JSONResponse(status_code=404, content={"detail": "Job not found."})
+    job = _jobs.get(nid)
     if job is None:
-        return JSONResponse(
-            status_code=404, content={"detail": f"Job '{job_id}' not found."}
-        )
-    return JobStatus(job_id=job_id, status=job["status"], message=job["message"])
+        return JSONResponse(status_code=404, content={"detail": "Job not found."})
+    return JobStatus(job_id=nid, status=job["status"], message=job["message"])
 
 
 # ---------------------------------------------------------------------------
@@ -146,7 +227,10 @@ async def get_status(job_id: str):
 
 @app.get("/preview/{job_id}", response_model=None)
 async def preview(job_id: str):
-    job = _jobs.get(job_id)
+    nid = _normalize_job_id(job_id)
+    if nid is None:
+        return JSONResponse(status_code=404, content={"detail": "Job not found."})
+    job = _jobs.get(nid)
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
@@ -161,7 +245,10 @@ async def preview(job_id: str):
 
 @app.get("/download/{job_id}", response_model=None)
 async def download(job_id: str):
-    job = _jobs.get(job_id)
+    nid = _normalize_job_id(job_id)
+    if nid is None:
+        return JSONResponse(status_code=404, content={"detail": "Job not found."})
+    job = _jobs.get(nid)
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
@@ -169,7 +256,7 @@ async def download(job_id: str):
     return FileResponse(
         path=job["path"],
         media_type="application/zip",
-        filename=f"kegganog_{job_id[:8]}.zip",
+        filename=f"kegganog_{nid[:8]}.zip",
     )
 
 
@@ -180,7 +267,10 @@ async def download(job_id: str):
 
 @app.get("/samples/{job_id}", response_model=None)
 async def get_samples(job_id: str):
-    job = _jobs.get(job_id)
+    nid = _normalize_job_id(job_id)
+    if nid is None:
+        return JSONResponse(status_code=404, content={"detail": "Job not found."})
+    job = _jobs.get(nid)
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
@@ -195,7 +285,10 @@ async def get_samples(job_id: str):
 
 @app.get("/pathways/{job_id}", response_model=None)
 async def get_pathways(job_id: str):
-    job = _jobs.get(job_id)
+    nid = _normalize_job_id(job_id)
+    if nid is None:
+        return JSONResponse(status_code=404, content={"detail": "Job not found."})
+    job = _jobs.get(nid)
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
@@ -297,7 +390,16 @@ async def run_viz(
 ):
     import json
 
-    job = _jobs.get(job_id)
+    if plot_type not in _ALLOWED_PLOT_TYPES:
+        return JSONResponse(
+            status_code=422,
+            content={"detail": [f"Invalid plot_type: {plot_type!r}."]},
+        )
+
+    nid = _normalize_job_id(job_id)
+    if nid is None:
+        return JSONResponse(status_code=404, content={"detail": "Job not found."})
+    job = _jobs.get(nid)
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
@@ -390,10 +492,10 @@ def _pack_results(output_dir: Path) -> tuple[str, str]:
             "KEGGaNOG finished but produced no PNG file. "
             "Check that the input file is a valid eggNOG-mapper annotation."
         )
-    stable_png = Path(tempfile.mktemp(suffix=".png"))
+    stable_png = _secure_temp_path(".png")
     shutil.copy2(png_files[0], stable_png)
 
-    stable_zip = Path(tempfile.mktemp(suffix=".zip"))
+    stable_zip = _secure_temp_path(".zip")
     with zipfile.ZipFile(stable_zip, "w", zipfile.ZIP_DEFLATED) as zf:
         for result_file in output_dir.rglob("*"):
             if result_file.is_file():
@@ -435,7 +537,7 @@ def _blocking_analysis(file_bytes: bytes, params: WebParams) -> dict:
         pathways = list(df.columns)
 
         # Copy TSV to a stable path for later viz calls
-        stable_tsv = Path(tempfile.mktemp(suffix=".tsv"))
+        stable_tsv = _secure_temp_path(".tsv")
         shutil.copy2(kegg_decoder_file, stable_tsv)
 
         zip_path, png_path = _pack_results(output_dir)
@@ -495,7 +597,7 @@ def _blocking_analysis_multi(
         pathways = list(merged_df["Function"].dropna().unique())
 
         # Save merged TSV to stable path for later viz calls
-        stable_tsv = Path(tempfile.mktemp(suffix=".tsv"))
+        stable_tsv = _secure_temp_path(".tsv")
         merged_tsv = output_dir / "merged_pathways.tsv"
         shutil.copy2(merged_tsv, stable_tsv)
 
@@ -562,7 +664,7 @@ def _blocking_viz(
     title_val = title if title else None
     cmap_val = cmap if cmap else None
 
-    out_path = Path(tempfile.mktemp(suffix=".png"))
+    out_path = _secure_temp_path(".png")
 
     if plot_type == "barplot":
         fs = figsize or (8, 12)
@@ -590,9 +692,18 @@ def _blocking_viz(
         )
 
     elif plot_type == "corrnet":
+        import re
+
         import matplotlib.cm as mcm
+
         fs = figsize or (12, 6)
-        edge_cmap_obj = getattr(mcm, edge_cmap_name, plt.cm.coolwarm)
+        cmap_key = edge_cmap_name or "coolwarm"
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", cmap_key) and hasattr(
+            mcm, cmap_key
+        ):
+            edge_cmap_obj = getattr(mcm, cmap_key)
+        else:
+            edge_cmap_obj = plt.cm.coolwarm
         plot = cn.correlation_network(
             df,
             figsize=fs,

@@ -4,3 +4,15 @@
 .hidden  { display: none !important; }
 .mt-8   { margin-top: 8px; }
 .mt-12  { margin-top: 12px; }
+
+/* Color inputs: keep swatch above surrounding UI (native picker layering). */
+.radar-color-row input[type="color"] {
+  position: relative;
+  z-index: 3;
+  width: 2.75rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border, #ccc);
+  border-radius: var(--radius-sm, 4px);
+  cursor: pointer;
+}

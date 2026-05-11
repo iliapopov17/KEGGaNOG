@@ -1,0 +1,65 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Strip GitHub-specific markup from README
+        run: |
+          python - <<'EOF'
+          import re, pathlib
+          text = pathlib.Path("README.md").read_text()
+          # Remove light/dark logo block (GitHub-only img tags + br spacers)
+          text = re.sub(
+              r'(<img src="[^"]*#gh-(?:light|dark)-mode-only"[^\n]*/>\n)+\n(<br>\n)+\n',
+              '',
+              text,
+          )
+          # Remove the downloads badge (redundant on the PyPI page itself)
+          text = re.sub(r'\[!\[Downloads\]\([^\)]+\)\]\([^\)]+\)\n', '', text)
+          pathlib.Path("README.md").write_text(text)
+          EOF
+
+      - name: Build package
+        run: python -m build
+
+      - name: Check distribution
+        run: twine check dist/*
+
+      - name: Store distribution packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+  publish:
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+      - name: Download distributions
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1

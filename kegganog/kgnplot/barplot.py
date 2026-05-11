@@ -71,6 +71,7 @@ def barplot(
 
     # Load and process data
     df = df.drop(columns=["Function"], errors="ignore")
+    df = df.select_dtypes(include="number")
     df = df.loc[:, (df > 0).any(axis=0)]
     df_melted = df.melt(var_name="Pathway", value_name="Score")
 
@@ -144,15 +145,6 @@ def barplot(
     ax.invert_yaxis()
     ax.set_xlim(0, 1.0)
     ax.set_axisbelow(True)
-
-    # Get the path to the current directory (same location as the script)
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-
-    # Check if __pycache__ exists and remove it
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
-
     plt.close(fig)
 
     return KgnBarplot(fig, ax)
