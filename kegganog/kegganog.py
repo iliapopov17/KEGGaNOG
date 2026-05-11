@@ -7,8 +7,9 @@ from pathlib import Path
 
 from pydantic import ValidationError
 
+from importlib.metadata import version as _metadata_version
+
 from .schemas import CLIParams
-from .version import __version__
 from .processing import data_processing
 from .cheatmaps import simple_heatmap, grouped_heatmap
 from . import kegganog_multi
@@ -95,7 +96,7 @@ def main():
         "-V",
         "--version",
         action="version",
-        version=f"%(prog)s {__version__}",
+        version=f"%(prog)s {_metadata_version('kegganog')}",
     )
 
     # ------------------------------------------------------------------

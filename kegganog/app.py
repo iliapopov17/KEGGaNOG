@@ -17,8 +17,9 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
+from importlib.metadata import version as _metadata_version
+
 from .schemas import JobStatus, WebParams
-from .version import __version__
 
 # ---------------------------------------------------------------------------
 # FastAPI application instance
@@ -26,7 +27,7 @@ from .version import __version__
 
 app = FastAPI(
     title="KEGGaNOG",
-    version=__version__,
+    version=_metadata_version("kegganog"),
     docs_url=None,
     redoc_url=None,
 )
@@ -112,9 +113,8 @@ def _normalize_job_id(job_id: str) -> str | None:
 
 @app.get("/", response_class=HTMLResponse)
 async def index() -> HTMLResponse:
-    from .version import __version__
     html_file = Path(__file__).parent / "static" / "index.html"
-    html = html_file.read_text(encoding="utf-8").replace("__VERSION__", __version__)
+    html = html_file.read_text(encoding="utf-8").replace("__VERSION__", _metadata_version("kegganog"))
     return HTMLResponse(html)
 
 
