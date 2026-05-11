@@ -55,3 +55,6 @@ filterwarnings = [
     "ignore:This figure includes Axes that are not compatible with tight_layout:UserWarning",
     "ignore:Tight layout not applied.*:UserWarning",
 ]
+
+[tool.coverage.run]
+omit = ["*/processing/KEGG_decoder.py"]
