@@ -7,13 +7,10 @@
 <br>
 
 ![Python3](https://img.shields.io/badge/Language-Python3-steelblue)
-![Pandas](https://img.shields.io/badge/Dependecy-Pandas-steelblue)
-![Seaborn](https://img.shields.io/badge/Dependecy-Seaborn-steelblue)
-![Matplotlib](https://img.shields.io/badge/Dependecy-Matplotlib-steelblue)
-![Numpy](https://img.shields.io/badge/Dependecy-Numpy-steelblue)
 ![KEGG-Decoder](https://img.shields.io/badge/Dependecy-KEGG_Decoder-steelblue)
 ![License](https://img.shields.io/badge/License-MIT-steelblue)
 [![Downloads](https://static.pepy.tech/badge/kegganog)](https://pepy.tech/project/kegganog)
+[![codecov](https://codecov.io/gh/iliapopov17/KEGGaNOG/graph/badge.svg)](https://codecov.io/gh/iliapopov17/KEGGaNOG)
 
 ![Linux](https://img.shields.io/badge/Linux-FCC624?style=for-the-badge&logo=linux&logoColor=black)
 ![macOS](https://img.shields.io/badge/mac%20os-000000?style=for-the-badge&logo=macos&logoColor=F0F0F0)
@@ -69,6 +66,7 @@ options:
                         in `--multi` mode)
   -g, --group           Group the heatmap based on predefined categories
   -V, --version         show program's version number and exit
+  --web                 Launch local web UI in browser at http://localhost:8000
 ```
 
 🔗 Please visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
@@ -79,7 +77,7 @@ options:
 For an interactive, browser-based experience with live preview and advanced visualization options:
 
 ```bash
-kegganog --web
+KEGGaNOG --web
 ```
 
 Then open `http://localhost:8000` in your browser.
