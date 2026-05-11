@@ -143,11 +143,13 @@ def streamgraph(
     )
 
     if show_legend:
+        fig.subplots_adjust(right=0.72)
         ax.legend(
             title="Pathway Group",
             bbox_to_anchor=legend_bbox,
             loc=legend_loc,
             fontsize=legend_fontsize,
+            borderaxespad=0.5,
         )
 
     if grid:
@@ -166,14 +168,6 @@ def streamgraph(
     )
 
     ax.set_xlim(-0.5, len(df_plot.index) - 0.5)
-
-    # Get the path to the current directory (same location as the script)
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-
-    # Check if __pycache__ exists and remove it
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
 
     plt.close(fig)
 

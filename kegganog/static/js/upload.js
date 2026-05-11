@@ -25,7 +25,7 @@ fileInputSingle.addEventListener("change", () => {
 
 function setFileSingle(file) {
   selectedFileSingle = file;
-  dropZoneSingle.innerHTML = `<span class="drop-zone-icon">✅</span>${file.name}`;
+  dropZoneSingle.innerHTML = `<span class="drop-zone-icon">✅</span>${escapeHtml(file.name)}`;
   dropZoneSingle.classList.add("has-file");
 }
 
@@ -72,6 +72,6 @@ fileInputMulti.addEventListener("change", () => {
 function setFilesMulti(files) {
   selectedFilesMulti = files;
   const txt = files.length === 1 ? files[0].name : `${files.length} annotation files found`;
-  dropZoneMulti.innerHTML = `<span class="drop-zone-icon">✅</span>${txt}`;
+  dropZoneMulti.innerHTML = `<span class="drop-zone-icon">✅</span>${escapeHtml(txt)}`;
   dropZoneMulti.classList.add("has-file");
 }

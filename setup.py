@@ -1,47 +1,67 @@
-from setuptools import setup, find_packages
-from setuptools.command.install import install
-import os
+"""setuptools entry point: package metadata and install-time KEGG_decoder fetch."""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Any
+
 import requests
+from setuptools import find_packages, setup
+from setuptools.command.install import install
 
 VERSION_FILE = "kegganog/version.py"
+SCRIPT_URL = (
+    "https://raw.githubusercontent.com/bjtully/BioData/master/KEGGDecoder/KEGG_decoder.py"
+)
+SCRIPT_RELATIVE_PATH = Path("kegganog") / "processing" / "KEGG_decoder.py"
+REQUEST_TIMEOUT_SECONDS = 10
+
+
+def load_version(namespace_file: str) -> dict[str, Any]:
+    namespace: dict[str, Any] = {}
+    with open(namespace_file, encoding="utf-8") as handle:
+        exec(handle.read(), namespace)
+    return namespace
+
+
+def download_external_script(install_lib: str) -> None:
+    """
+    Download KEGG_decoder.py into the installed package (same behavior as before).
+
+    On network or HTTP failure: print an error message and return without raising,
+    so installation still completes (runtime may fail later if the script is missing).
+    """
+    target_path = Path(install_lib) / SCRIPT_RELATIVE_PATH
+    target_path.parent.mkdir(parents=True, exist_ok=True)
+
+    print(f"Downloading KEGG-Decoder script from:\n  {SCRIPT_URL}\n  -> {target_path}")
+    try:
+        response = requests.get(SCRIPT_URL, timeout=REQUEST_TIMEOUT_SECONDS)
+        response.raise_for_status()
+        target_path.write_bytes(response.content)
+        print(
+            f"Successfully downloaded KEGG_decoder.py "
+            f"({target_path.stat().st_size} bytes) to {target_path}"
+        )
+    except requests.RequestException as exc:
+        print(f"Failed to download {SCRIPT_URL}: {exc}")
 
 
 class CustomInstallCommand(install):
     """Custom installation to download KEGG_decoder.py."""
 
-    def run(self):
-        # Run standard installation
+    def run(self) -> None:
         install.run(self)
-
-        # Define where to download the script
-        install_dir = os.path.join(self.install_lib, "kegganog")  # Adjust if needed
-        os.makedirs(install_dir, exist_ok=True)  # Ensure the directory exists
-
-        # Define the script URL and target path
-        script_url = "https://raw.githubusercontent.com/bjtully/BioData/master/KEGGDecoder/KEGG_decoder.py"
-        script_path = os.path.join(install_dir, "processing/KEGG_decoder.py")
-
-        # Download the script
-        print(f"Downloading {script_url} to {script_path}...")
-        try:
-            response = requests.get(script_url, timeout=10)
-            response.raise_for_status()  # Raise an error for bad status codes
-            with open(script_path, "wb") as f:
-                f.write(response.content)
-            print(f"Successfully downloaded {script_path}")
-        except requests.RequestException as e:
-            print(f"Failed to download {script_url}: {e}")
+        download_external_script(self.install_lib)
 
 
-version = {}
-with open(VERSION_FILE) as f:
-    exec(f.read(), version)
+version = load_version(VERSION_FILE)
 
 setup(
     name="kegganog",
     version=version["__version__"],
     description="A tool for generating KEGG heatmaps from eggNOG-mapper outputs.",
-    long_description=open("README_PyPI.md").read(),
+    long_description=Path("README_PyPI.md").read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
     author="Ilia Popov",
     author_email="iljapopov17@gmail.com",
@@ -54,9 +74,10 @@ setup(
     cmdclass={"install": CustomInstallCommand},
     entry_points={
         "console_scripts": [
-            "KEGGaNOG=kegganog.kegganog:main",  # Maps the command to the main function
+            "KEGGaNOG=kegganog.kegganog:main",
+            "kegganog=kegganog.kegganog:main",
         ],
     },
-    install_requires=open("requirements.txt").read().splitlines(),
+    install_requires=Path("requirements.txt").read_text(encoding="utf-8").splitlines(),
     python_requires=">=3.10,<=3.16",
 )

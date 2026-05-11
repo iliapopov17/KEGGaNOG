@@ -16,7 +16,7 @@ function buildSampleListInRight() {
   currentSamples.forEach(name => {
     const li = document.createElement("li");
     li.dataset.sample = name; li.draggable = true;
-    li.innerHTML = `<span class="drag-handle">⇅</span>${name}`;
+    li.innerHTML = `<span class="drag-handle">⇅</span>${escapeHtml(name)}`;
     ul.appendChild(li);
   });
   initDragSort(ul);
@@ -118,7 +118,7 @@ function multiBarParamsHTML(p, isStream = false) {
     <summary>Main</summary>
     <div class="right-spoiler-body">
       <div class="params-grid-2">
-        <div class="param-cell"><label>Colormap</label><input type="text" id="${p}-cmap" value="tab20"></div>
+        <div class="param-cell"><label>Colormap</label><input type="text" id="${p}-cmap" value="tab20" list="matplotlib-named-cmaps" placeholder="matplotlib colormap name"></div>
         <div class="param-cell"><label>Bar width</label><input type="number" id="${p}-bw" value="0.6" min="0.1" max="1" step="0.05"></div>
         ${isStream ? `
         <div class="param-cell"><label>Fill alpha</label><input type="number" id="${p}-fill-alpha" value="1.0" min="0" max="1" step="0.05"></div>
@@ -143,12 +143,12 @@ function multiBarParamsHTML(p, isStream = false) {
         <div class="param-cell" style="justify-content:flex-end;padding-top:8px;">
           <div class="check-row"><input type="checkbox" id="${p}-legend" checked><label for="${p}-legend">Show legend</label></div>
         </div>
-        <div class="param-cell"><label>Legend loc</label><select id="${p}-legend-loc">
-          <option value="upper left" selected>Upper left</option><option value="upper right">Upper right</option>
+        <div class="param-cell"><label>Legend anchor (<code>loc</code>)</label><select id="${p}-legend-loc">
+          <option value="upper left" selected>Upper left (of legend box)</option><option value="upper right">Upper right</option>
           <option value="lower left">Lower left</option><option value="lower right">Lower right</option>
         </select></div>
-        <div class="param-cell"><label>Legend X (bbox)</label><input type="number" id="${p}-legend-bx" value="1.05" step="0.05"></div>
-        <div class="param-cell"><label>Legend Y (bbox)</label><input type="number" id="${p}-legend-by" value="1.0" step="0.05"></div>
+        <div class="param-cell"><label>Bbox X (axes coords, &gt;1 → right of plot)</label><input type="number" id="${p}-legend-bx" value="1.02" step="0.05"></div>
+        <div class="param-cell"><label>Bbox Y</label><input type="number" id="${p}-legend-by" value="1.0" step="0.05"></div>
       </div>
     </div>
   </details>

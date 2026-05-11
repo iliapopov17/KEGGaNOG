@@ -25,26 +25,49 @@ async function submitJob() {
     form.append("dpi",         document.getElementById("single-dpi").value);
     form.append("color",       document.getElementById("single-color").value);
     form.append("sample_name", document.getElementById("single-sample-name").value);
-    form.append("group",       document.getElementById("single-group").checked);
+    form.append("group",       document.getElementById("single-group").checked ? "true" : "false");
   } else {
     url = "/run-multi";
     for (const f of selectedFilesMulti) form.append("files", f);
     form.append("dpi",   document.getElementById("multi-dpi").value);
     form.append("color", document.getElementById("multi-color").value);
-    form.append("group", document.getElementById("multi-group").checked);
+    form.append("group", document.getElementById("multi-group").checked ? "true" : "false");
   }
 
   let jobId;
   try {
     const r = await fetch(url, { method: "POST", body: form });
-    const d = await r.json();
+    const ct = (r.headers.get("content-type") || "").toLowerCase();
+    let d = null;
+    if (ct.includes("application/json")) {
+      try {
+        d = await r.json();
+      } catch {
+        showStatus("error", "Invalid JSON from server. Check that KEGGaNOG is running.");
+        btn.disabled = false;
+        return;
+      }
+    } else {
+      const text = await r.text();
+      showStatus(
+        "error",
+        r.ok
+          ? text.slice(0, 300) || "Unexpected non-JSON response."
+          : `Server error (${r.status}). ${text.slice(0, 200)}`
+      );
+      btn.disabled = false;
+      return;
+    }
     if (!r.ok) {
-      showStatus("error", d.detail ? d.detail.join("; ") : "Submission failed.");
+      showStatus("error", formatFastApiDetail(d));
       btn.disabled = false; return;
     }
     jobId = d.job_id;
   } catch {
-    showStatus("error", "Could not reach the server.");
+    showStatus(
+      "error",
+      "Could not reach the server. Start the UI with: KEGGaNOG --web  or  kegganog --web"
+    );
     btn.disabled = false; return;
   }
 
@@ -65,7 +88,7 @@ function pollStatus(jobId, btn, mode) {
       }
     } catch {
       clearInterval(iv); btn.disabled = false;
-      showStatus("error", "Lost connection.");
+      showStatus("error", "Lost connection. Is the KEGGaNOG server still running?");
     }
   }, 2000);
 }

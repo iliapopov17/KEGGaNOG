@@ -1,3 +1,11 @@
 [build-system]
-requires = ["setuptools", "wheel", "requests"]
+requires = ["setuptools>=61.0", "wheel>=0.42", "requests>=2.28.0,<3"]
 build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+filterwarnings = [
+    "ignore:This figure includes Axes that are not compatible with tight_layout:UserWarning",
+    "ignore:Tight layout not applied.*:UserWarning",
+]

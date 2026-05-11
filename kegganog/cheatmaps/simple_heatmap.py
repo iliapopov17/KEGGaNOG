@@ -1,9 +1,13 @@
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-import numpy as np
-import os
 from tqdm import tqdm
+
+from .heatmaps_common import (
+    create_three_panel_heatmap_figure,
+    save_heatmap_png,
+    split_dataframe_into_three_row_segments,
+)
 
 
 # Function to generate the heatmap
@@ -23,27 +27,13 @@ def generate_heatmap(
         df = pd.DataFrame(data)
         pbar.update(1)
 
-        # Split into three parts for separate heatmaps
-        # df1, df2, df3 = np.array_split(df, 3) - DEPRECATED
-
-        # Get the number of rows
-        num_rows = len(df)
-
-        # Calculate the split indices for 3 parts
-        split_size = num_rows // 3
-
-        # Split the dataframe manually
-        df1 = df.iloc[:split_size]
-        df2 = df.iloc[split_size : 2 * split_size]
-        df3 = df.iloc[2 * split_size :]
+        df1, df2, df3 = split_dataframe_into_three_row_segments(df)
         pbar.update(2)
 
     if figsize is None:
         figsize = (20, 20)
 
-    # Create a grid for the heatmap and colorbar
-    fig, axes = plt.subplots(1, 3, figsize=figsize)
-    cbar_ax = fig.add_axes([0.92, 0.4, 0.02, 0.2])  # Colorbar axis on the right
+    fig, axes, cbar_ax = create_three_panel_heatmap_figure(figsize)
 
     with tqdm(total=3, desc="Creating heatmap parts") as pbar:
         sns.heatmap(
@@ -84,10 +74,6 @@ def generate_heatmap(
         axes[2].set_ylabel("")
 
     plt.tight_layout(rect=[0, 0, 0.9, 1])
-    output_file = os.path.join(output_folder, "heatmap_figure.png")
-    with tqdm(total=1, desc="Saving plot") as pbar:
-        plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
-        pbar.update(1)
-    plt.show()
+    save_heatmap_png(output_folder, dpi)
 
     return fig, axes

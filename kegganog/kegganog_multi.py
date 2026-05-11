@@ -1,5 +1,4 @@
 import argparse
-import warnings
 import os
 import shutil
 from pathlib import Path
@@ -60,9 +59,6 @@ def main():
     temp_folder = os.path.join(args.output, "temp_files")
     os.makedirs(temp_folder, exist_ok=True)
 
-    temp_folder = os.path.join(args.output, "temp_files")
-    os.makedirs(temp_folder, exist_ok=True)
-
     # Check if input is a list of files or a single annotation file
     if args.input.endswith(".txt"):
         with open(args.input, "r") as f:
@@ -93,10 +89,6 @@ def main():
     # Merge all KEGG-Decoder output files
     kegg_decoder_file = data_processing_multi.merge_outputs(args.output)
 
-    # grouped_heatmap_multi.generate_grouped_heatmap_multi(
-    # kegg_decoder_file, args.output, args.dpi, args.color
-    # )
-
     if args.group:
         # Define group labels, for simplicity let's assume you have them in your dataset
         grouped_heatmap_multi.generate_grouped_heatmap_multi(
@@ -109,14 +101,6 @@ def main():
         )
 
     # print(f"Heatmap saved in {args.output}/heatmap_figure.png")
-
-    # Get the path to the current directory (same location as the script)
-    current_dir = Path(__file__).resolve().parent
-    pycache_dir = current_dir / "__pycache__"
-
-    # Check if __pycache__ exists and remove it
-    if pycache_dir.exists() and pycache_dir.is_dir():
-        shutil.rmtree(pycache_dir)
 
 
 if __name__ == "__main__":

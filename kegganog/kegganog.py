@@ -160,56 +160,48 @@ def main():
     # ------------------------------------------------------------------
     # Pipeline — identical to the original, params.X instead of args.X
     # ------------------------------------------------------------------
-    try:
-        if os.path.exists(params.output_dir):
-            if not params.overwrite:
-                raise FileExistsError(
-                    f"Output directory '{params.output_dir}' already exists. "
-                    "Use --overwrite to overwrite it."
-                )
-            else:
-                shutil.rmtree(params.output_dir)
-
-        os.makedirs(params.output_dir)
-        temp_folder = os.path.join(params.output_dir, "temp_files")
-        os.makedirs(temp_folder, exist_ok=True)
-
-        if params.multi:
-            kegganog_multi.main()
+    if os.path.exists(params.output_dir):
+        if not params.overwrite:
+            raise FileExistsError(
+                f"Output directory '{params.output_dir}' already exists. "
+                "Use --overwrite to overwrite it."
+            )
         else:
-            parsed_filtered_file = data_processing.parse_emapper(
-                params.input_path, temp_folder
+            shutil.rmtree(params.output_dir)
+
+    os.makedirs(params.output_dir)
+    temp_folder = os.path.join(params.output_dir, "temp_files")
+    os.makedirs(temp_folder, exist_ok=True)
+
+    if params.multi:
+        kegganog_multi.main()
+    else:
+        parsed_filtered_file = data_processing.parse_emapper(
+            params.input_path, temp_folder
+        )
+        kegg_decoder_file = data_processing.run_kegg_decoder(
+            parsed_filtered_file, params.output_dir, params.sample_name
+        )
+
+        if params.group:
+            grouped_heatmap.generate_grouped_heatmap(
+                kegg_decoder_file,
+                params.output_dir,
+                params.dpi,
+                params.color,
+                params.sample_name,
             )
-            kegg_decoder_file = data_processing.run_kegg_decoder(
-                parsed_filtered_file, params.output_dir, params.sample_name
+        else:
+            simple_heatmap.generate_heatmap(
+                kegg_decoder_file,
+                params.output_dir,
+                params.dpi,
+                params.color,
+                params.sample_name,
             )
 
-            if params.group:
-                grouped_heatmap.generate_grouped_heatmap(
-                    kegg_decoder_file,
-                    params.output_dir,
-                    params.dpi,
-                    params.color,
-                    params.sample_name,
-                )
-            else:
-                simple_heatmap.generate_heatmap(
-                    kegg_decoder_file,
-                    params.output_dir,
-                    params.dpi,
-                    params.color,
-                    params.sample_name,
-                )
-
-        print(f"Heatmap saved in {params.output_dir}/heatmap_figure.png")
-        print_citation()
-
-    finally:
-        # Remove __pycache__ on exit (runs even on Ctrl+C)
-        current_dir = Path(__file__).resolve().parent
-        pycache_dir = current_dir / "__pycache__"
-        if pycache_dir.exists() and pycache_dir.is_dir():
-            shutil.rmtree(pycache_dir)
+    print(f"Heatmap saved in {params.output_dir}/heatmap_figure.png")
+    print_citation()
 
 
 if __name__ == "__main__":

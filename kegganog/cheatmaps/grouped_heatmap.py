@@ -1,9 +1,16 @@
-import os
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
+
+from .heatmaps_common import (
+    GROUPED_PART1_GROUPS,
+    GROUPED_PART2_GROUPS,
+    GROUPED_PART3_GROUPS,
+    insert_split_rows_between_groups,
+    save_heatmap_png,
+)
 
 function_groups = {
     "Carbon fixation": [
@@ -257,32 +264,9 @@ def generate_grouped_heatmap(
             df["Function"], categories=df["Function"], ordered=True
         )
 
-        # Define the group ranges for each part
-        part1_groups = [
-            "Amino acid metabolism",
-            "Arsenic reduction",
-            "Bacterial secretion systems",
-            "Biofilm formation",
-            "Carbohydrate metabolism",
-            "Photosynthesis",
-        ]
-        part2_groups = [
-            "Carbon degradation",
-            "Carbon fixation",
-            "Cell mobility",
-            "Genetic competence",
-            "Hydrogen redox",
-            "Metal transporters",
-            "Methanogenesis",
-            "Miscellaneous",
-        ]
-        part3_groups = [
-            "Nitrogen metabolism",
-            "Oxidative phosphorylation",
-            "Sulfur metabolism",
-            "Transporters",
-            "Vitamin biosynthesis",
-        ]
+        part1_groups = GROUPED_PART1_GROUPS
+        part2_groups = GROUPED_PART2_GROUPS
+        part3_groups = GROUPED_PART3_GROUPS
 
         # Split the dataframe into 3 parts based on the groupings
         part1 = df[df["Group"].isin(part1_groups)].reset_index(drop=True)
@@ -292,34 +276,16 @@ def generate_grouped_heatmap(
         part3 = df[df["Group"].isin(part3_groups)].reset_index(drop=True)
         pbar.update(1)
 
-    # Function to add empty rows between groups
     with tqdm(total=6, desc="Adding split between groups") as pbar:
-
-        def add_empty_rows(df, groups):
-            new_rows = []
-            for group in groups:
-                group_rows = df[df["Group"] == group]
-                new_rows.append(group_rows)
-                # Add an empty row if this is not the last group
-                if group != groups[-1]:
-                    # Create an empty row with 'split' in the 'Function' column
-                    empty_row = pd.DataFrame(
-                        [["split_" + f"{group}"] + [np.nan] * (df.shape[1] - 1)],
-                        columns=df.columns,
-                    )  # First column is 'Function'
-                    # empty_row['Group'] = 'split'  # Set the group to 'split'
-                    new_rows.append(empty_row)  # Append the empty row
-            return pd.concat(new_rows, ignore_index=True)
-
-        part1 = add_empty_rows(
+        part1 = insert_split_rows_between_groups(
             df[df["Group"].isin(part1_groups)], part1_groups
         ).reset_index(drop=True)
         pbar.update(1)
-        part2 = add_empty_rows(
+        part2 = insert_split_rows_between_groups(
             df[df["Group"].isin(part2_groups)], part2_groups
         ).reset_index(drop=True)
         pbar.update(1)
-        part3 = add_empty_rows(
+        part3 = insert_split_rows_between_groups(
             df[df["Group"].isin(part3_groups)], part3_groups
         ).reset_index(drop=True)
         pbar.update(1)
@@ -453,10 +419,6 @@ def generate_grouped_heatmap(
         # Layout adjustments
         plt.tight_layout(rect=[0, 0, 0.9, 1])
 
-    output_file = os.path.join(output_folder, "heatmap_figure.png")
-    with tqdm(total=1, desc="Saving plot") as pbar:
-        plt.savefig(output_file, dpi=dpi, bbox_inches="tight")
-        pbar.update(1)
-    plt.show()
+    save_heatmap_png(output_folder, dpi)
 
     return fig, axes

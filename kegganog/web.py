@@ -26,6 +26,7 @@ def launch() -> None:
     _schedule_browser_open()
 
     print(f"\n  KEGGaNOG web UI is running at: http://{HOST}:{PORT}")
+    print("  (Started via KEGGaNOG --web or kegganog --web)")
     print("  Press Ctrl+C to stop the server.\n")
 
     uvicorn.run(

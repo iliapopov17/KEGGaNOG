@@ -178,8 +178,15 @@ async function runViz(plotType) {
   try {
     const r = await fetch(`/viz/${currentJobId}`, { method: "POST", body: form });
     if (!r.ok) {
-      const d = await r.json();
-      if (stat) { stat.className = "viz-status error"; stat.textContent = d.detail || "Failed."; }
+      const ct = (r.headers.get("content-type") || "").toLowerCase();
+      let msg = `Failed (${r.status}).`;
+      if (ct.includes("application/json")) {
+        try {
+          const d = await r.json();
+          msg = formatFastApiDetail(d);
+        } catch { /* keep msg */ }
+      }
+      if (stat) { stat.className = "viz-status error"; stat.textContent = msg; }
       if (btn) btn.disabled = false; return;
     }
     const blob = await r.blob();
