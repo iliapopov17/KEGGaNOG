@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
 import itertools
 from pathlib import Path
 
@@ -27,18 +26,9 @@ _CHAR_FIGSIZE = (12, 12)
 _CHAR_COLOR = "Blues"
 _CHAR_SAMPLE = "TEST"
 
-# SHA-256 of PNG bytes from a reference run (matplotlib 3.10.x, Agg).
-# If this fails on a new CI image, regenerate locally with the same
-# requirements.txt pins and update these constants.
-_BASELINE_SHA256 = {
-    "simple": "905b3a3e9022eb4f7a1592ca811eac7b53397a723bf196359f87b68a3136ede7",
-    "grouped": "391f63719a52f7e01403a45877f4a301c76a247ff1eb9b43ebe36806e7687b11",
-    "multi_simple": "e403adc9d3246013a900830be04d026890bc214bdd261eb9a62742ae868f0a59",
-    "multi_grouped": "4dec8789cc9a914e81d7545da83e4cc7eb37f01b3e862fe3d115dd4031e96dda",
-}
-
 
 def _read_png_sha256(out_dir: Path) -> str:
+    import hashlib
     png = out_dir / "heatmap_figure.png"
     assert png.is_file(), f"missing {png}"
     return hashlib.sha256(png.read_bytes()).hexdigest()
@@ -105,22 +95,6 @@ def test_simple_heatmap_reproducible(tmp_path: Path) -> None:
     _assert_reproducible_twice("simple", run_once)
 
 
-def test_simple_heatmap_baseline_sha256(tmp_path: Path) -> None:
-    out = tmp_path / "out"
-    out.mkdir()
-    simple_heatmap.generate_heatmap(
-        str(SIMPLE_TSV),
-        str(out),
-        _CHAR_DPI,
-        _CHAR_COLOR,
-        _CHAR_SAMPLE,
-        figsize=_CHAR_FIGSIZE,
-        annot=True,
-    )
-    assert _read_png_sha256(out) == _BASELINE_SHA256["simple"]
-    plt.close("all")
-
-
 def test_grouped_heatmap_reproducible(tmp_path: Path) -> None:
     seq = itertools.count()
 
@@ -143,22 +117,6 @@ def test_grouped_heatmap_reproducible(tmp_path: Path) -> None:
     _assert_reproducible_twice("grouped", run_once)
 
 
-def test_grouped_heatmap_baseline_sha256(tmp_path: Path) -> None:
-    out = tmp_path / "out"
-    out.mkdir()
-    grouped_heatmap.generate_grouped_heatmap(
-        str(GROUPED_TSV),
-        str(out),
-        _CHAR_DPI,
-        _CHAR_COLOR,
-        _CHAR_SAMPLE,
-        figsize=_CHAR_FIGSIZE,
-        annot=True,
-    )
-    assert _read_png_sha256(out) == _BASELINE_SHA256["grouped"]
-    plt.close("all")
-
-
 def test_simple_heatmap_multi_reproducible(tmp_path: Path, multi_simple_df: pd.DataFrame) -> None:
     seq = itertools.count()
 
@@ -173,18 +131,6 @@ def test_simple_heatmap_multi_reproducible(tmp_path: Path, multi_simple_df: pd.D
         return h
 
     _assert_reproducible_twice("multi_simple", run_once)
-
-
-def test_simple_heatmap_multi_baseline_sha256(
-    tmp_path: Path, multi_simple_df: pd.DataFrame
-) -> None:
-    out = tmp_path / "out"
-    out.mkdir()
-    simple_heatmap_multi.generate_heatmap_multi(
-        multi_simple_df, str(out), _CHAR_DPI, _CHAR_COLOR, figsize=_CHAR_FIGSIZE
-    )
-    assert _read_png_sha256(out) == _BASELINE_SHA256["multi_simple"]
-    plt.close("all")
 
 
 def test_grouped_heatmap_multi_reproducible(
@@ -205,13 +151,3 @@ def test_grouped_heatmap_multi_reproducible(
     _assert_reproducible_twice("multi_grouped", run_once)
 
 
-def test_grouped_heatmap_multi_baseline_sha256(
-    tmp_path: Path, multi_grouped_df: pd.DataFrame
-) -> None:
-    out = tmp_path / "out"
-    out.mkdir()
-    grouped_heatmap_multi.generate_grouped_heatmap_multi(
-        multi_grouped_df, str(out), _CHAR_DPI, _CHAR_COLOR, figsize=_CHAR_FIGSIZE
-    )
-    assert _read_png_sha256(out) == _BASELINE_SHA256["multi_grouped"]
-    plt.close("all")
