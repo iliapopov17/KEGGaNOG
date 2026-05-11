@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "kegganog"
 version = "1.5.001.1"
 description = "A tool for generating KEGG heatmaps from eggNOG-mapper outputs."
-readme = {file = "README_PyPI.md", content-type = "text/markdown"}
+readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
 authors = [{name = "Ilia Popov", email = "iljapopov17@gmail.com"}]
 requires-python = ">=3.10,<=3.16"

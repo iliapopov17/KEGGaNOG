@@ -1,10 +1,9 @@
 include LICENSE
-include README_PyPI.md
+include README.md
 recursive-include kegganog/static *
 exclude demo_data/*
 exclude imgs/*.png
 exclude imgs/Layout/*
 exclude __pycache__
-exclude README.md
 exclude CITATION.cff
 exclude miscellaneous
