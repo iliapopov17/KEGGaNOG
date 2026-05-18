@@ -15,6 +15,7 @@ def test_schedule_browser_open_opens_correct_url(monkeypatch):
     _schedule_browser_open()
 
     import time as _time
+
     _time.sleep(0.1)
 
     assert opened_urls == ["http://127.0.0.1:8000"]
@@ -26,6 +27,7 @@ def test_launch_prints_url_and_starts_server(monkeypatch, capsys):
 
     with patch("uvicorn.run") as mock_run:
         from kegganog.web import launch
+
         launch()
 
     captured = capsys.readouterr()
@@ -39,6 +41,7 @@ def test_launch_passes_correct_app_string(monkeypatch):
 
     with patch("uvicorn.run") as mock_run:
         from kegganog.web import launch
+
         launch()
 
     call_args = mock_run.call_args

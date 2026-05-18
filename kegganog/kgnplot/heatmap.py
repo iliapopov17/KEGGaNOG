@@ -1,16 +1,15 @@
-from kegganog.cheatmaps.simple_heatmap import generate_heatmap
-from kegganog.cheatmaps.grouped_heatmap import generate_grouped_heatmap
-from kegganog.cheatmaps.simple_heatmap_multi import generate_heatmap_multi
-from kegganog.cheatmaps.grouped_heatmap_multi import generate_grouped_heatmap_multi
-import tempfile
-import os
-import pandas as pd
-import shutil
-from pathlib import Path
 import contextlib
-import sys
 import io
+import shutil
+import tempfile
+
 import matplotlib.pyplot as plt
+
+from kegganog.cheatmaps.grouped_heatmap import generate_grouped_heatmap
+from kegganog.cheatmaps.grouped_heatmap_multi import generate_grouped_heatmap_multi
+from kegganog.cheatmaps.simple_heatmap import generate_heatmap
+from kegganog.cheatmaps.simple_heatmap_multi import generate_heatmap_multi
+
 from .base import KgnPlotBase
 
 
@@ -33,8 +32,9 @@ def silent_plot_and_tqdm():
     tqdm.tqdm = SilentTqdm
 
     # Optionally silence stdout/stderr
-    with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(
-        io.StringIO()
+    with (
+        contextlib.redirect_stdout(io.StringIO()),
+        contextlib.redirect_stderr(io.StringIO()),
     ):
         try:
             yield

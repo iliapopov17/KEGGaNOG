@@ -1,11 +1,11 @@
-import pandas as pd
+from typing import List, Optional, Tuple, Union
+
 import matplotlib.pyplot as plt
-import seaborn as sns
 import numpy as np
-from typing import Optional, Tuple, Union, List
-from pathlib import Path
-import shutil
+import seaborn as sns
+
 from kegganog.cheatmaps.grouped_heatmap import function_groups
+
 from .base import KgnPlotBase
 
 

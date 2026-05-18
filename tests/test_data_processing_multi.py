@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -68,9 +68,7 @@ def test_parse_emapper_multi_missing_kegg_ko_raises(tmp_path):
     input_file.write_text("## header\nOtherCol\tAnotherCol\nval1\tval2\n")
 
     with pytest.raises(KeyError, match="KEGG_ko"):
-        data_processing_multi.parse_emapper(
-            str(input_file), str(sample_folder), "S1"
-        )
+        data_processing_multi.parse_emapper(str(input_file), str(sample_folder), "S1")
 
 
 def test_parse_emapper_multi_skips_dash_entries(tmp_path):
@@ -201,7 +199,9 @@ def test_merge_outputs_merges_two_samples(tmp_path):
 def test_merge_outputs_single_sample(tmp_path):
     temp_files_dir = tmp_path / "temp_files" / "OnlySample"
     temp_files_dir.mkdir(parents=True)
-    _write_pathways_tsv(temp_files_dir / "OnlySample_pathways.tsv", "OnlySample", [1.0, 0.0])
+    _write_pathways_tsv(
+        temp_files_dir / "OnlySample_pathways.tsv", "OnlySample", [1.0, 0.0]
+    )
 
     result = data_processing_multi.merge_outputs(str(tmp_path))
 

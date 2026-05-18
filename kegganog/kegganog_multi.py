@@ -1,9 +1,8 @@
 import argparse
 import os
-import shutil
-from pathlib import Path
+
+from .cheatmaps import grouped_heatmap_multi, simple_heatmap_multi
 from .processing import data_processing_multi
-from .cheatmaps import simple_heatmap_multi, grouped_heatmap_multi
 
 
 # Main function to handle different types of inputs and manage output locations

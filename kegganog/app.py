@@ -8,6 +8,7 @@ import shutil
 import tempfile
 import uuid
 import zipfile
+from importlib.metadata import version as _metadata_version
 from pathlib import Path
 from typing import List
 
@@ -16,8 +17,6 @@ from fastapi import FastAPI, Form, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
-
-from importlib.metadata import version as _metadata_version
 
 from .schemas import JobStatus, WebParams
 
@@ -114,7 +113,9 @@ def _normalize_job_id(job_id: str) -> str | None:
 @app.get("/", response_class=HTMLResponse)
 async def index() -> HTMLResponse:
     html_file = Path(__file__).parent / "static" / "index.html"
-    html = html_file.read_text(encoding="utf-8").replace("__VERSION__", _metadata_version("kegganog"))
+    html = html_file.read_text(encoding="utf-8").replace(
+        "__VERSION__", _metadata_version("kegganog")
+    )
     return HTMLResponse(html)
 
 
@@ -144,8 +145,13 @@ async def run_analysis(
 
     job_id = str(uuid.uuid4())
     _jobs[job_id] = {
-        "status": "pending", "path": None, "png_path": None,
-        "message": "", "tsv_path": None, "samples": [], "pathways": [],
+        "status": "pending",
+        "path": None,
+        "png_path": None,
+        "message": "",
+        "tsv_path": None,
+        "samples": [],
+        "pathways": [],
     }
     asyncio.create_task(_run_job(job_id, file_bytes, params))
     return JobStatus(job_id=job_id, status="pending")
@@ -197,8 +203,13 @@ async def run_analysis_multi(
 
     job_id = str(uuid.uuid4())
     _jobs[job_id] = {
-        "status": "pending", "path": None, "png_path": None,
-        "message": "", "tsv_path": None, "samples": [], "pathways": [],
+        "status": "pending",
+        "path": None,
+        "png_path": None,
+        "message": "",
+        "tsv_path": None,
+        "samples": [],
+        "pathways": [],
     }
     asyncio.create_task(_run_job_multi(job_id, named_files, params))
     return JobStatus(job_id=job_id, status="pending")
@@ -234,7 +245,9 @@ async def preview(job_id: str):
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
-        return JSONResponse(status_code=400, content={"detail": "Analysis not finished yet."})
+        return JSONResponse(
+            status_code=400, content={"detail": "Analysis not finished yet."}
+        )
     return FileResponse(path=job["png_path"], media_type="image/png")
 
 
@@ -252,7 +265,9 @@ async def download(job_id: str):
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
-        return JSONResponse(status_code=400, content={"detail": "Analysis not finished yet."})
+        return JSONResponse(
+            status_code=400, content={"detail": "Analysis not finished yet."}
+        )
     return FileResponse(
         path=job["path"],
         media_type="application/zip",
@@ -274,7 +289,9 @@ async def get_samples(job_id: str):
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
-        return JSONResponse(status_code=400, content={"detail": "Analysis not finished yet."})
+        return JSONResponse(
+            status_code=400, content={"detail": "Analysis not finished yet."}
+        )
     return JSONResponse(content={"samples": job["samples"]})
 
 
@@ -292,7 +309,9 @@ async def get_pathways(job_id: str):
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
-        return JSONResponse(status_code=400, content={"detail": "Analysis not finished yet."})
+        return JSONResponse(
+            status_code=400, content={"detail": "Analysis not finished yet."}
+        )
     return JSONResponse(content={"pathways": job["pathways"]})
 
 
@@ -363,9 +382,9 @@ async def run_viz(
     edge_cmap: str = Form(default="coolwarm"),
     cbar_size: float = Form(default=0.5),
     # ---- radarplot-specific ----
-    pathways_selected: str = Form(default=""),   # JSON array string
-    colors_selected: str = Form(default=""),     # JSON array string
-    sample_order: str = Form(default=""),        # JSON array string
+    pathways_selected: str = Form(default=""),  # JSON array string
+    colors_selected: str = Form(default=""),  # JSON array string
+    sample_order: str = Form(default=""),  # JSON array string
     fill_alpha: float = Form(default=0.25),
     line_width: float = Form(default=2.0),
     line_style: str = Form(default="solid"),
@@ -403,9 +422,13 @@ async def run_viz(
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     if job["status"] != "done":
-        return JSONResponse(status_code=400, content={"detail": "Analysis not finished yet."})
+        return JSONResponse(
+            status_code=400, content={"detail": "Analysis not finished yet."}
+        )
     if not job.get("tsv_path"):
-        return JSONResponse(status_code=400, content={"detail": "No TSV data available for this job."})
+        return JSONResponse(
+            status_code=400, content={"detail": "No TSV data available for this job."}
+        )
 
     def _parse_json_list(s: str) -> list:
         s = s.strip()
@@ -421,29 +444,80 @@ async def run_viz(
     loop = asyncio.get_event_loop()
     try:
         png_path = await loop.run_in_executor(
-            None, _blocking_viz,
-            job["tsv_path"], plot_type, figsize, dpi,
-            heatmap_color, heatmap_group, heatmap_sample_name, heatmap_dpi,
-            title, title_fontsize, title_color, title_weight, title_style,
+            None,
+            _blocking_viz,
+            job["tsv_path"],
+            plot_type,
+            figsize,
+            dpi,
+            heatmap_color,
+            heatmap_group,
+            heatmap_sample_name,
+            heatmap_dpi,
+            title,
+            title_fontsize,
+            title_color,
+            title_weight,
+            title_style,
             background_color,
-            xlabel, xlabel_fontsize, xlabel_color, xlabel_weight, xlabel_style,
-            ylabel, ylabel_fontsize, ylabel_color, ylabel_weight, ylabel_style,
-            xticks_fontsize, xticks_color, xticks_weight, xticks_style,
-            xticks_rotation, xticks_ha,
-            yticks_fontsize, yticks_color, yticks_weight, yticks_style,
-            grid, grid_linestyle, grid_alpha,
-            cmap, cmap_range_min, cmap_range_max, sort_order,
-            box_color, showfliers, grid_color, grid_linewidth,
-            threshold, node_size, node_color, node_edgecolors, node_linewidths,
-            label_fontsize, label_color, label_weight, edge_cmap, cbar_size,
+            xlabel,
+            xlabel_fontsize,
+            xlabel_color,
+            xlabel_weight,
+            xlabel_style,
+            ylabel,
+            ylabel_fontsize,
+            ylabel_color,
+            ylabel_weight,
+            ylabel_style,
+            xticks_fontsize,
+            xticks_color,
+            xticks_weight,
+            xticks_style,
+            xticks_rotation,
+            xticks_ha,
+            yticks_fontsize,
+            yticks_color,
+            yticks_weight,
+            yticks_style,
+            grid,
+            grid_linestyle,
+            grid_alpha,
+            cmap,
+            cmap_range_min,
+            cmap_range_max,
+            sort_order,
+            box_color,
+            showfliers,
+            grid_color,
+            grid_linewidth,
+            threshold,
+            node_size,
+            node_color,
+            node_edgecolors,
+            node_linewidths,
+            label_fontsize,
+            label_color,
+            label_weight,
+            edge_cmap,
+            cbar_size,
             _parse_json_list(pathways_selected),
             _parse_json_list(colors_selected),
             _parse_json_list(sample_order),
-            fill_alpha, line_width, line_style,
-            label_background or None, label_edgecolor or None, label_pad,
-            show_legend, legend_loc,
-            bar_width, edgecolor, edge_linewidth, stream_fill_alpha,
-            legend_fontsize, (legend_bbox_x, legend_bbox_y),
+            fill_alpha,
+            line_width,
+            line_style,
+            label_background or None,
+            label_edgecolor or None,
+            label_pad,
+            show_legend,
+            legend_loc,
+            bar_width,
+            edgecolor,
+            edge_linewidth,
+            stream_fill_alpha,
+            legend_fontsize,
+            (legend_bbox_x, legend_bbox_y),
         )
     except Exception as e:
         return JSONResponse(status_code=500, content={"detail": str(e)})
@@ -460,7 +534,9 @@ async def _run_job(job_id: str, file_bytes: bytes, params: WebParams) -> None:
     _jobs[job_id]["status"] = "running"
     loop = asyncio.get_event_loop()
     try:
-        result = await loop.run_in_executor(None, _blocking_analysis, file_bytes, params)
+        result = await loop.run_in_executor(
+            None, _blocking_analysis, file_bytes, params
+        )
         _jobs[job_id].update({"status": "done", **result})
     except Exception as e:
         _jobs[job_id].update({"status": "error", "message": str(e)})
@@ -505,8 +581,8 @@ def _pack_results(output_dir: Path) -> tuple[str, str]:
 
 
 def _blocking_analysis(file_bytes: bytes, params: WebParams) -> dict:
+    from .cheatmaps import grouped_heatmap, simple_heatmap
     from .processing import data_processing
-    from .cheatmaps import simple_heatmap, grouped_heatmap
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
@@ -525,11 +601,19 @@ def _blocking_analysis(file_bytes: bytes, params: WebParams) -> dict:
 
         if params.group:
             grouped_heatmap.generate_grouped_heatmap(
-                kegg_decoder_file, str(output_dir), params.dpi, params.color, params.sample_name
+                kegg_decoder_file,
+                str(output_dir),
+                params.dpi,
+                params.color,
+                params.sample_name,
             )
         else:
             simple_heatmap.generate_heatmap(
-                kegg_decoder_file, str(output_dir), params.dpi, params.color, params.sample_name
+                kegg_decoder_file,
+                str(output_dir),
+                params.dpi,
+                params.color,
+                params.sample_name,
             )
 
         # Read TSV to extract pathway list for viz
@@ -554,8 +638,8 @@ def _blocking_analysis(file_bytes: bytes, params: WebParams) -> dict:
 def _blocking_analysis_multi(
     named_files: list[tuple[str, bytes]], params: WebParams
 ) -> dict:
+    from .cheatmaps import grouped_heatmap_multi, simple_heatmap_multi
     from .processing import data_processing_multi
-    from .cheatmaps import simple_heatmap_multi, grouped_heatmap_multi
 
     with tempfile.TemporaryDirectory() as tmpdir:
         tmpdir = Path(tmpdir)
@@ -626,32 +710,84 @@ def _blocking_viz(
     heatmap_group: bool,
     heatmap_sample_name: str,
     heatmap_dpi: int,
-    title, title_fontsize, title_color, title_weight, title_style,
+    title,
+    title_fontsize,
+    title_color,
+    title_weight,
+    title_style,
     background_color,
-    xlabel, xlabel_fontsize, xlabel_color, xlabel_weight, xlabel_style,
-    ylabel, ylabel_fontsize, ylabel_color, ylabel_weight, ylabel_style,
-    xticks_fontsize, xticks_color, xticks_weight, xticks_style,
-    xticks_rotation, xticks_ha,
-    yticks_fontsize, yticks_color, yticks_weight, yticks_style,
-    grid, grid_linestyle, grid_alpha,
-    cmap, cmap_range_min, cmap_range_max, sort_order,
-    box_color, showfliers, grid_color, grid_linewidth,
-    threshold, node_size, node_color, node_edgecolors, node_linewidths,
-    label_fontsize, label_color, label_weight, edge_cmap_name, cbar_size,
-    pathways_selected, colors_selected, sample_order,
-    fill_alpha, line_width, line_style,
-    label_background, label_edgecolor, label_pad,
-    show_legend, legend_loc,
-    bar_width, edgecolor, edge_linewidth, stream_fill_alpha,
-    legend_fontsize, legend_bbox,
+    xlabel,
+    xlabel_fontsize,
+    xlabel_color,
+    xlabel_weight,
+    xlabel_style,
+    ylabel,
+    ylabel_fontsize,
+    ylabel_color,
+    ylabel_weight,
+    ylabel_style,
+    xticks_fontsize,
+    xticks_color,
+    xticks_weight,
+    xticks_style,
+    xticks_rotation,
+    xticks_ha,
+    yticks_fontsize,
+    yticks_color,
+    yticks_weight,
+    yticks_style,
+    grid,
+    grid_linestyle,
+    grid_alpha,
+    cmap,
+    cmap_range_min,
+    cmap_range_max,
+    sort_order,
+    box_color,
+    showfliers,
+    grid_color,
+    grid_linewidth,
+    threshold,
+    node_size,
+    node_color,
+    node_edgecolors,
+    node_linewidths,
+    label_fontsize,
+    label_color,
+    label_weight,
+    edge_cmap_name,
+    cbar_size,
+    pathways_selected,
+    colors_selected,
+    sample_order,
+    fill_alpha,
+    line_width,
+    line_style,
+    label_background,
+    label_edgecolor,
+    label_pad,
+    show_legend,
+    legend_loc,
+    bar_width,
+    edgecolor,
+    edge_linewidth,
+    stream_fill_alpha,
+    legend_fontsize,
+    legend_bbox,
 ) -> str:
     import matplotlib.pyplot as plt
-    from .kgnplot import barplot as bp, corrnet as cn, radarplot as rp
-    from .kgnplot import stackedbar as sb, streamgraph as sg
+
     from .cheatmaps import (
-        simple_heatmap, grouped_heatmap,
-        simple_heatmap_multi, grouped_heatmap_multi,
+        grouped_heatmap,
+        grouped_heatmap_multi,
+        simple_heatmap,
+        simple_heatmap_multi,
     )
+    from .kgnplot import barplot as bp
+    from .kgnplot import corrnet as cn
+    from .kgnplot import radarplot as rp
+    from .kgnplot import stackedbar as sb
+    from .kgnplot import streamgraph as sg
 
     df = pd.read_csv(tsv_path, sep="\t")
 
@@ -674,19 +810,31 @@ def _blocking_viz(
             cmap=cmap_val or "Greens",
             cmap_range=(cmap_range_min, cmap_range_max),
             title=title_val,
-            title_fontsize=title_fontsize, title_color=title_color,
-            title_weight=title_weight, title_style=title_style,
+            title_fontsize=title_fontsize,
+            title_color=title_color,
+            title_weight=title_weight,
+            title_style=title_style,
             xlabel=xlabel or "Pathway completeness",
-            xlabel_fontsize=xlabel_fontsize, xlabel_color=xlabel_color,
-            xlabel_weight=xlabel_weight, xlabel_style=xlabel_style,
+            xlabel_fontsize=xlabel_fontsize,
+            xlabel_color=xlabel_color,
+            xlabel_weight=xlabel_weight,
+            xlabel_style=xlabel_style,
             ylabel=ylabel or "Pathway",
-            ylabel_fontsize=ylabel_fontsize, ylabel_color=ylabel_color,
-            ylabel_weight=ylabel_weight, ylabel_style=ylabel_style,
-            xticks_fontsize=xticks_fontsize, xticks_color=xticks_color,
-            xticks_weight=xticks_weight, xticks_style=xticks_style,
-            yticks_fontsize=yticks_fontsize, yticks_color=yticks_color,
-            yticks_weight=yticks_weight, yticks_style=yticks_style,
-            grid=grid, grid_linestyle=grid_linestyle, grid_alpha=grid_alpha,
+            ylabel_fontsize=ylabel_fontsize,
+            ylabel_color=ylabel_color,
+            ylabel_weight=ylabel_weight,
+            ylabel_style=ylabel_style,
+            xticks_fontsize=xticks_fontsize,
+            xticks_color=xticks_color,
+            xticks_weight=xticks_weight,
+            xticks_style=xticks_style,
+            yticks_fontsize=yticks_fontsize,
+            yticks_color=yticks_color,
+            yticks_weight=yticks_weight,
+            yticks_style=yticks_style,
+            grid=grid,
+            grid_linestyle=grid_linestyle,
+            grid_alpha=grid_alpha,
             background_color=background_color,
             sort_order=sort_order,
         )
@@ -698,9 +846,7 @@ def _blocking_viz(
 
         fs = figsize or (12, 6)
         cmap_key = edge_cmap_name or "coolwarm"
-        if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", cmap_key) and hasattr(
-            mcm, cmap_key
-        ):
+        if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", cmap_key) and hasattr(mcm, cmap_key):
             edge_cmap_obj = getattr(mcm, cmap_key)
         else:
             edge_cmap_obj = plt.cm.coolwarm
@@ -712,13 +858,16 @@ def _blocking_viz(
             node_color=node_color,
             node_edgecolors=node_edgecolors,
             node_linewidths=node_linewidths,
-            label_fontsize=label_fontsize, label_color=label_color,
+            label_fontsize=label_fontsize,
+            label_color=label_color,
             label_weight=label_weight,
             edge_cmap=edge_cmap_obj,
             cbar_size=cbar_size,
             title=title_val,
-            title_fontsize=title_fontsize, title_color=title_color,
-            title_weight=title_weight, title_style=title_style,
+            title_fontsize=title_fontsize,
+            title_color=title_color,
+            title_weight=title_weight,
+            title_style=title_style,
             background_color=background_color,
         )
 
@@ -736,18 +885,26 @@ def _blocking_viz(
             colors=clrs,
             sample_order=sord,
             title=title_val,
-            title_fontsize=title_fontsize, title_color=title_color,
-            title_weight=title_weight, title_style=title_style,
-            label_fontsize=label_fontsize, label_color=label_color,
-            label_weight=label_weight, label_style=xticks_style,
+            title_fontsize=title_fontsize,
+            title_color=title_color,
+            title_weight=title_weight,
+            title_style=title_style,
+            label_fontsize=label_fontsize,
+            label_color=label_color,
+            label_weight=label_weight,
+            label_style=xticks_style,
             label_background=label_background,
             label_edgecolor=label_edgecolor,
             label_pad=label_pad,
-            ytick_fontsize=yticks_fontsize, ytick_color=yticks_color,
+            ytick_fontsize=yticks_fontsize,
+            ytick_color=yticks_color,
             ytick_weight=yticks_weight,
-            fill_alpha=fill_alpha, line_width=line_width, line_style=line_style,
+            fill_alpha=fill_alpha,
+            line_width=line_width,
+            line_style=line_style,
             background_color=background_color,
-            legend_loc=legend_loc, legend_bbox=legend_bbox,
+            legend_loc=legend_loc,
+            legend_bbox=legend_bbox,
             show_legend=show_legend,
         )
 
@@ -761,21 +918,34 @@ def _blocking_viz(
             edgecolor=edgecolor,
             edge_linewidth=edge_linewidth,
             title=title_val,
-            title_fontsize=title_fontsize, title_color=title_color,
-            title_weight=title_weight, title_style=title_style,
+            title_fontsize=title_fontsize,
+            title_color=title_color,
+            title_weight=title_weight,
+            title_style=title_style,
             xlabel=xlabel or "Samples",
-            xlabel_fontsize=xlabel_fontsize, xlabel_color=xlabel_color,
-            xlabel_weight=xlabel_weight, xlabel_style=xlabel_style,
+            xlabel_fontsize=xlabel_fontsize,
+            xlabel_color=xlabel_color,
+            xlabel_weight=xlabel_weight,
+            xlabel_style=xlabel_style,
             ylabel=ylabel or "Total Completeness",
-            ylabel_fontsize=ylabel_fontsize, ylabel_color=ylabel_color,
-            ylabel_weight=ylabel_weight, ylabel_style=ylabel_style,
-            xticks_rotation=xticks_rotation, xticks_ha=xticks_ha,
-            xticks_fontsize=xticks_fontsize, xticks_color=xticks_color,
-            xticks_weight=xticks_weight, xticks_style=xticks_style,
+            ylabel_fontsize=ylabel_fontsize,
+            ylabel_color=ylabel_color,
+            ylabel_weight=ylabel_weight,
+            ylabel_style=ylabel_style,
+            xticks_rotation=xticks_rotation,
+            xticks_ha=xticks_ha,
+            xticks_fontsize=xticks_fontsize,
+            xticks_color=xticks_color,
+            xticks_weight=xticks_weight,
+            xticks_style=xticks_style,
             background_color=background_color,
-            grid=grid, grid_linestyle=grid_linestyle, grid_alpha=grid_alpha,
-            legend_fontsize=legend_fontsize, legend_loc=legend_loc,
-            legend_bbox=legend_bbox, show_legend=show_legend,
+            grid=grid,
+            grid_linestyle=grid_linestyle,
+            grid_alpha=grid_alpha,
+            legend_fontsize=legend_fontsize,
+            legend_loc=legend_loc,
+            legend_bbox=legend_bbox,
+            show_legend=show_legend,
         )
 
     elif plot_type == "streamgraph":
@@ -789,21 +959,34 @@ def _blocking_viz(
             edgecolor=edgecolor or None,
             edge_linewidth=edge_linewidth,
             title=title_val,
-            title_fontsize=title_fontsize, title_color=title_color,
-            title_weight=title_weight, title_style=title_style,
+            title_fontsize=title_fontsize,
+            title_color=title_color,
+            title_weight=title_weight,
+            title_style=title_style,
             xlabel=xlabel or "Samples",
-            xlabel_fontsize=xlabel_fontsize, xlabel_color=xlabel_color,
-            xlabel_weight=xlabel_weight, xlabel_style=xlabel_style,
+            xlabel_fontsize=xlabel_fontsize,
+            xlabel_color=xlabel_color,
+            xlabel_weight=xlabel_weight,
+            xlabel_style=xlabel_style,
             ylabel=ylabel or "Total Completeness",
-            ylabel_fontsize=ylabel_fontsize, ylabel_color=ylabel_color,
-            ylabel_weight=ylabel_weight, ylabel_style=ylabel_style,
-            xticks_rotation=xticks_rotation, xticks_ha=xticks_ha,
-            xticks_fontsize=xticks_fontsize, xticks_color=xticks_color,
-            xticks_weight=xticks_weight, xticks_style=xticks_style,
+            ylabel_fontsize=ylabel_fontsize,
+            ylabel_color=ylabel_color,
+            ylabel_weight=ylabel_weight,
+            ylabel_style=ylabel_style,
+            xticks_rotation=xticks_rotation,
+            xticks_ha=xticks_ha,
+            xticks_fontsize=xticks_fontsize,
+            xticks_color=xticks_color,
+            xticks_weight=xticks_weight,
+            xticks_style=xticks_style,
             background_color=background_color,
-            grid=grid, grid_linestyle=grid_linestyle, grid_alpha=grid_alpha,
-            legend_fontsize=legend_fontsize, legend_loc=legend_loc,
-            legend_bbox=legend_bbox, show_legend=show_legend,
+            grid=grid,
+            grid_linestyle=grid_linestyle,
+            grid_alpha=grid_alpha,
+            legend_fontsize=legend_fontsize,
+            legend_loc=legend_loc,
+            legend_bbox=legend_bbox,
+            show_legend=show_legend,
         )
 
     elif plot_type == "heatmap":
@@ -823,14 +1006,24 @@ def _blocking_viz(
                             df, str(hm_tmp), heatmap_dpi, heatmap_color
                         )
                 else:
-                    sample_name = heatmap_sample_name if heatmap_sample_name else "SAMPLE"
+                    sample_name = (
+                        heatmap_sample_name if heatmap_sample_name else "SAMPLE"
+                    )
                     if heatmap_group:
                         grouped_heatmap.generate_grouped_heatmap(
-                            tsv_path, str(hm_tmp), heatmap_dpi, heatmap_color, sample_name
+                            tsv_path,
+                            str(hm_tmp),
+                            heatmap_dpi,
+                            heatmap_color,
+                            sample_name,
                         )
                     else:
                         simple_heatmap.generate_heatmap(
-                            tsv_path, str(hm_tmp), heatmap_dpi, heatmap_color, sample_name
+                            tsv_path,
+                            str(hm_tmp),
+                            heatmap_dpi,
+                            heatmap_color,
+                            sample_name,
                         )
                 png_files = list(hm_tmp.rglob("*.png"))
                 if not png_files:

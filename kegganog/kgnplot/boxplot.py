@@ -1,9 +1,8 @@
-from pathlib import Path
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
+
 import matplotlib.pyplot as plt
 import seaborn as sns
-import shutil
-import pandas as pd
+
 from .base import KgnPlotBase
 
 

@@ -1,7 +1,7 @@
-import pandas as pd
-import seaborn as sns
 import matplotlib.pyplot as plt
 import numpy as np
+import pandas as pd
+import seaborn as sns
 from tqdm import tqdm
 
 from .grouped_heatmap import function_groups
@@ -18,7 +18,6 @@ def generate_grouped_heatmap_multi(
     kegg_decoder_file, output_folder, dpi, color, figsize=None
 ):
     with tqdm(total=6, desc="Preparing heatmap data") as pbar:
-
         function_groups_lower = {
             group: {func.lower() for func in funcs}
             for group, funcs in function_groups.items()
