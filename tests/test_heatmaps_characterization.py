@@ -29,6 +29,7 @@ _CHAR_SAMPLE = "TEST"
 
 def _read_png_sha256(out_dir: Path) -> str:
     import hashlib
+
     png = out_dir / "heatmap_figure.png"
     assert png.is_file(), f"missing {png}"
     return hashlib.sha256(png.read_bytes()).hexdigest()
@@ -117,7 +118,9 @@ def test_grouped_heatmap_reproducible(tmp_path: Path) -> None:
     _assert_reproducible_twice("grouped", run_once)
 
 
-def test_simple_heatmap_multi_reproducible(tmp_path: Path, multi_simple_df: pd.DataFrame) -> None:
+def test_simple_heatmap_multi_reproducible(
+    tmp_path: Path, multi_simple_df: pd.DataFrame
+) -> None:
     seq = itertools.count()
 
     def run_once() -> str:
@@ -149,5 +152,3 @@ def test_grouped_heatmap_multi_reproducible(
         return h
 
     _assert_reproducible_twice("multi_grouped", run_once)
-
-

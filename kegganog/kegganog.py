@@ -3,16 +3,14 @@ import os
 import shutil
 import sys
 import warnings
-from pathlib import Path
+from importlib.metadata import version as _metadata_version
 
 from pydantic import ValidationError
 
-from importlib.metadata import version as _metadata_version
-
-from .schemas import CLIParams
-from .processing import data_processing
-from .cheatmaps import simple_heatmap, grouped_heatmap
 from . import kegganog_multi
+from .cheatmaps import grouped_heatmap, simple_heatmap
+from .processing import data_processing
+from .schemas import CLIParams
 
 warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
 

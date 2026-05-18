@@ -55,7 +55,9 @@ class TestCLIParams:
             CLIParams(input_path="in.tsv", output_dir="out/", color="Rainbow")
         assert "color" in str(exc_info.value)
 
-    @pytest.mark.parametrize("color", ["Blues", "Greens", "Reds", "Purples", "Greys", "Oranges"])
+    @pytest.mark.parametrize(
+        "color", ["Blues", "Greens", "Reds", "Purples", "Greys", "Oranges"]
+    )
     def test_all_valid_colors(self, color):
         p = CLIParams(input_path="in.tsv", output_dir="out/", color=color)
         assert p.color == color
@@ -78,7 +80,9 @@ class TestCLIParams:
             CLIParams(input_path="in.tsv", output_dir="out/", sample_name="bad:name")
 
     def test_sample_name_valid_special_chars(self):
-        p = CLIParams(input_path="in.tsv", output_dir="out/", sample_name="My-Sample_2024")
+        p = CLIParams(
+            input_path="in.tsv", output_dir="out/", sample_name="My-Sample_2024"
+        )
         assert p.sample_name == "My-Sample_2024"
 
     def test_sample_name_too_long(self):

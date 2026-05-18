@@ -2,9 +2,7 @@
 
 from __future__ import annotations
 
-import sys
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -34,7 +32,9 @@ def test_missing_input_output_in_cli_mode(capsys):
 
 def test_invalid_dpi_exits_one(capsys):
     with pytest.raises(SystemExit) as exc_info:
-        with patch("sys.argv", ["kegganog", "-i", "in.tsv", "-o", "out/", "-dpi", "10"]):
+        with patch(
+            "sys.argv", ["kegganog", "-i", "in.tsv", "-o", "out/", "-dpi", "10"]
+        ):
             main()
     assert exc_info.value.code == 1
     assert "--dpi" in capsys.readouterr().err
@@ -42,7 +42,9 @@ def test_invalid_dpi_exits_one(capsys):
 
 def test_invalid_color_exits_one(capsys):
     with pytest.raises(SystemExit) as exc_info:
-        with patch("sys.argv", ["kegganog", "-i", "in.tsv", "-o", "out/", "-c", "Rainbow"]):
+        with patch(
+            "sys.argv", ["kegganog", "-i", "in.tsv", "-o", "out/", "-c", "Rainbow"]
+        ):
             main()
     assert exc_info.value.code == 1
     assert "--color" in capsys.readouterr().err
@@ -81,9 +83,18 @@ def test_output_dir_overwrite(tmp_path):
     output_dir.mkdir()
     (output_dir / "old_file.txt").write_text("old")
 
-    with patch("sys.argv", ["kegganog", "-i", str(input_file), "-o", str(output_dir), "--overwrite"]):
-        with patch("kegganog.kegganog.data_processing.parse_emapper", return_value=str(tmp_path / "parsed.txt")):
-            with patch("kegganog.kegganog.data_processing.run_kegg_decoder", return_value=str(tmp_path / "decoder.tsv")):
+    with patch(
+        "sys.argv",
+        ["kegganog", "-i", str(input_file), "-o", str(output_dir), "--overwrite"],
+    ):
+        with patch(
+            "kegganog.kegganog.data_processing.parse_emapper",
+            return_value=str(tmp_path / "parsed.txt"),
+        ):
+            with patch(
+                "kegganog.kegganog.data_processing.run_kegg_decoder",
+                return_value=str(tmp_path / "decoder.tsv"),
+            ):
                 with patch("kegganog.kegganog.simple_heatmap.generate_heatmap"):
                     main()
 
@@ -96,8 +107,13 @@ def test_single_sample_pipeline(tmp_path, capsys):
     output_dir = tmp_path / "output"
 
     with patch("sys.argv", ["kegganog", "-i", str(input_file), "-o", str(output_dir)]):
-        with patch("kegganog.kegganog.data_processing.parse_emapper", return_value="parsed.txt"):
-            with patch("kegganog.kegganog.data_processing.run_kegg_decoder", return_value="decoder.tsv"):
+        with patch(
+            "kegganog.kegganog.data_processing.parse_emapper", return_value="parsed.txt"
+        ):
+            with patch(
+                "kegganog.kegganog.data_processing.run_kegg_decoder",
+                return_value="decoder.tsv",
+            ):
                 with patch("kegganog.kegganog.simple_heatmap.generate_heatmap"):
                     main()
 
@@ -110,10 +126,19 @@ def test_single_sample_grouped_pipeline(tmp_path, capsys):
     input_file.write_text("dummy")
     output_dir = tmp_path / "output"
 
-    with patch("sys.argv", ["kegganog", "-i", str(input_file), "-o", str(output_dir), "-g"]):
-        with patch("kegganog.kegganog.data_processing.parse_emapper", return_value="parsed.txt"):
-            with patch("kegganog.kegganog.data_processing.run_kegg_decoder", return_value="decoder.tsv"):
-                with patch("kegganog.kegganog.grouped_heatmap.generate_grouped_heatmap"):
+    with patch(
+        "sys.argv", ["kegganog", "-i", str(input_file), "-o", str(output_dir), "-g"]
+    ):
+        with patch(
+            "kegganog.kegganog.data_processing.parse_emapper", return_value="parsed.txt"
+        ):
+            with patch(
+                "kegganog.kegganog.data_processing.run_kegg_decoder",
+                return_value="decoder.tsv",
+            ):
+                with patch(
+                    "kegganog.kegganog.grouped_heatmap.generate_grouped_heatmap"
+                ):
                     main()
 
     assert output_dir.exists()
@@ -124,10 +149,17 @@ def test_multi_mode_calls_kegganog_multi(tmp_path):
     input_file.write_text("sample1.tsv\n")
     output_dir = tmp_path / "output"
 
-    with patch("sys.argv", ["kegganog", "-M", "-i", str(input_file), "-o", str(output_dir)]):
+    with patch(
+        "sys.argv", ["kegganog", "-M", "-i", str(input_file), "-o", str(output_dir)]
+    ):
         with patch("kegganog.kegganog.kegganog_multi.main") as mock_multi:
-            with patch("kegganog.kegganog.data_processing.parse_emapper", return_value="p.txt"):
-                with patch("kegganog.kegganog.data_processing.run_kegg_decoder", return_value="d.tsv"):
+            with patch(
+                "kegganog.kegganog.data_processing.parse_emapper", return_value="p.txt"
+            ):
+                with patch(
+                    "kegganog.kegganog.data_processing.run_kegg_decoder",
+                    return_value="d.tsv",
+                ):
                     with patch("kegganog.kegganog.simple_heatmap.generate_heatmap"):
                         main()
     mock_multi.assert_called_once()

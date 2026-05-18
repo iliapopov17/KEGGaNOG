@@ -2,11 +2,9 @@
 
 from __future__ import annotations
 
-import asyncio
 import io
 import zipfile
 from pathlib import Path
-from unittest.mock import patch
 
 import httpx
 import pytest
@@ -17,13 +15,14 @@ from kegganog.app import (
     _safe_client_filename,
     app,
 )
-from kegganog.schemas import WebParams
 
 
 def _minimal_png_bytes() -> bytes:
     import matplotlib
+
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
+
     buf = io.BytesIO()
     fig, ax = plt.subplots(figsize=(1, 1))
     fig.savefig(buf, format="png", dpi=72)
@@ -88,7 +87,10 @@ class TestNormalizeJobId:
 
 class TestSafeClientFilename:
     def test_normal_filename(self):
-        assert _safe_client_filename("sample.emapper.annotations") == "sample.emapper.annotations"
+        assert (
+            _safe_client_filename("sample.emapper.annotations")
+            == "sample.emapper.annotations"
+        )
 
     def test_none_returns_default(self):
         assert _safe_client_filename(None) == "sample.annotations"
@@ -139,10 +141,20 @@ def test_preview_invalid_uuid(client):
 
 
 def test_preview_job_not_done(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
-    _jobs[job_id] = {"status": "running", "path": None, "png_path": None, "message": "", "tsv_path": None, "samples": [], "pathways": []}
+    _jobs[job_id] = {
+        "status": "running",
+        "path": None,
+        "png_path": None,
+        "message": "",
+        "tsv_path": None,
+        "samples": [],
+        "pathways": [],
+    }
     with TestClient(app) as c:
         r = c.get(f"/preview/{job_id}")
     assert r.status_code == 400
@@ -165,10 +177,20 @@ def test_download_invalid_uuid(client):
 
 
 def test_download_job_not_done(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
-    _jobs[job_id] = {"status": "pending", "path": None, "png_path": None, "message": "", "tsv_path": None, "samples": [], "pathways": []}
+    _jobs[job_id] = {
+        "status": "pending",
+        "path": None,
+        "png_path": None,
+        "message": "",
+        "tsv_path": None,
+        "samples": [],
+        "pathways": [],
+    }
     with TestClient(app) as c:
         r = c.get(f"/download/{job_id}")
     assert r.status_code == 400
@@ -191,10 +213,20 @@ def test_samples_invalid_uuid(client):
 
 
 def test_samples_job_not_done(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
-    _jobs[job_id] = {"status": "running", "path": None, "png_path": None, "message": "", "tsv_path": None, "samples": ["S1"], "pathways": []}
+    _jobs[job_id] = {
+        "status": "running",
+        "path": None,
+        "png_path": None,
+        "message": "",
+        "tsv_path": None,
+        "samples": ["S1"],
+        "pathways": [],
+    }
     with TestClient(app) as c:
         r = c.get(f"/samples/{job_id}")
     assert r.status_code == 400
@@ -202,8 +234,10 @@ def test_samples_job_not_done(tmp_path):
 
 
 def test_samples_done_returns_list(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
     job = _make_done_job(tmp_path)
     job["samples"] = ["Sample1", "Sample2"]
@@ -231,10 +265,20 @@ def test_pathways_invalid_uuid(client):
 
 
 def test_pathways_job_not_done(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
-    _jobs[job_id] = {"status": "pending", "path": None, "png_path": None, "message": "", "tsv_path": None, "samples": [], "pathways": ["p1"]}
+    _jobs[job_id] = {
+        "status": "pending",
+        "path": None,
+        "png_path": None,
+        "message": "",
+        "tsv_path": None,
+        "samples": [],
+        "pathways": ["p1"],
+    }
     with TestClient(app) as c:
         r = c.get(f"/pathways/{job_id}")
     assert r.status_code == 400
@@ -242,8 +286,10 @@ def test_pathways_job_not_done(tmp_path):
 
 
 def test_pathways_done_returns_list(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
     job = _make_done_job(tmp_path)
     job["pathways"] = ["glycolysis", "TCA Cycle"]
@@ -261,8 +307,10 @@ def test_pathways_done_returns_list(tmp_path):
 
 
 def test_viz_invalid_plot_type(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
     _jobs[job_id] = _make_done_job(tmp_path)
     with TestClient(app) as c:
@@ -277,15 +325,27 @@ def test_viz_invalid_uuid(client):
 
 
 def test_viz_not_found(client):
-    r = client.post("/viz/00000000-0000-0000-0000-000000000000", data={"plot_type": "barplot"})
+    r = client.post(
+        "/viz/00000000-0000-0000-0000-000000000000", data={"plot_type": "barplot"}
+    )
     assert r.status_code == 404
 
 
 def test_viz_job_not_done(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
-    _jobs[job_id] = {"status": "running", "path": None, "png_path": None, "message": "", "tsv_path": None, "samples": [], "pathways": []}
+    _jobs[job_id] = {
+        "status": "running",
+        "path": None,
+        "png_path": None,
+        "message": "",
+        "tsv_path": None,
+        "samples": [],
+        "pathways": [],
+    }
     with TestClient(app) as c:
         r = c.post(f"/viz/{job_id}", data={"plot_type": "barplot"})
     assert r.status_code == 400
@@ -293,8 +353,10 @@ def test_viz_job_not_done(tmp_path):
 
 
 def test_viz_no_tsv_path(tmp_path):
-    from kegganog.app import _jobs
     import uuid
+
+    from kegganog.app import _jobs
+
     job_id = str(uuid.uuid4())
     job = _make_done_job(tmp_path)
     job["tsv_path"] = None
@@ -308,9 +370,10 @@ def test_viz_no_tsv_path(tmp_path):
 @pytest.mark.asyncio
 async def test_viz_barplot_with_real_tsv(tmp_path):
     """Test /viz/{job_id} with barplot using a real TSV fixture."""
-    from kegganog.app import _jobs, _blocking_viz
     import uuid
     from pathlib import Path
+
+    from kegganog.app import _jobs
 
     fixtures = Path(__file__).parent / "fixtures"
     tsv_path = fixtures / "simple_decoder.tsv"
@@ -364,6 +427,7 @@ def test_run_upload_too_large(client):
 
 def test_run_multi_too_many_files(client):
     from kegganog.app import MAX_MULTI_UPLOAD_FILES
+
     files = [
         ("files", (f"f{i}.tsv", b"x", "text/tab-separated-values"))
         for i in range(MAX_MULTI_UPLOAD_FILES + 1)

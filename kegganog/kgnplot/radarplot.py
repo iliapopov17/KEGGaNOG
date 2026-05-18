@@ -1,8 +1,8 @@
+from typing import List, Optional, Tuple
+
 import matplotlib.pyplot as plt
 import numpy as np
-import shutil
-from pathlib import Path
-from typing import Optional, Tuple, List
+
 from .base import KgnPlotBase
 
 

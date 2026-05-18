@@ -4,7 +4,6 @@ import webbrowser
 
 import uvicorn
 
-
 # The address the server will listen on.
 # 127.0.0.1 means localhost only — the server is not exposed to the network,
 # which is the correct behaviour for a local desktop tool.

@@ -6,7 +6,6 @@ import matplotlib
 import matplotlib.pyplot as plt
 import pytest
 
-
 # Headless, deterministic rendering for tests (matches web app Agg usage).
 matplotlib.use("Agg")
 

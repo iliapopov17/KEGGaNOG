@@ -17,7 +17,6 @@ def parse_emapper(input_file, sample_folder, file_prefix):
 
     # Read the input file with progress bar
     with tqdm(total=1, desc=f"Reading {file_prefix}") as pbar:
-
         header_row = next(
             i
             for i, line in enumerate(open(input_file))

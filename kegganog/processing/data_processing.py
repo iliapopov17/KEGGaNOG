@@ -9,9 +9,7 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-_SCRIPT_URL = (
-    "https://raw.githubusercontent.com/bjtully/BioData/master/KEGGDecoder/KEGG_decoder.py"
-)
+_SCRIPT_URL = "https://raw.githubusercontent.com/bjtully/BioData/master/KEGGDecoder/KEGG_decoder.py"
 _REQUEST_TIMEOUT = 10
 
 
@@ -40,7 +38,6 @@ def parse_emapper(input_file: str, temp_folder: str) -> str:
 
     # Read the input file with progress bar
     with tqdm(total=1, desc="Reading eggNOG-mapper annotations") as pbar:
-
         header_row = next(
             i
             for i, line in enumerate(open(input_file))

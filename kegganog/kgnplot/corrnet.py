@@ -1,9 +1,9 @@
-import networkx as nx
-import matplotlib.pyplot as plt
-from matplotlib.colors import Colormap
 from typing import Optional, Tuple
-import shutil
-from pathlib import Path
+
+import matplotlib.pyplot as plt
+import networkx as nx
+from matplotlib.colors import Colormap
+
 from .base import KgnPlotBase
 
 

@@ -1,5 +1,6 @@
-import matplotlib.pyplot as plt
 from typing import Optional
+
+import matplotlib.pyplot as plt
 
 
 class KgnPlotBase:
