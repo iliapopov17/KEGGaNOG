@@ -1,6 +1,7 @@
 import csv
 import glob
 import io
+import logging
 import os
 import subprocess
 from pathlib import Path
@@ -10,10 +11,12 @@ from tqdm import tqdm
 
 from kegganog.processing.data_processing import _ensure_kegg_decoder
 
+_log = logging.getLogger(__name__)
+
 
 # Function to parse eggnog-mapper output and prepare for KEGG-Decoder
 def parse_emapper(input_file, sample_folder, file_prefix):
-    print(f"Parsing {input_file}...")
+    _log.info("Parsing %s", input_file)
 
     # Read the input file with progress bar
     with tqdm(total=1, desc=f"Reading {file_prefix}") as pbar:
@@ -56,7 +59,6 @@ def parse_emapper(input_file, sample_folder, file_prefix):
         )
         buffer.seek(0)
 
-        # Read the CSV content into a string and remove quotes
         content = buffer.read().replace('"', "")
         pbar.update(1)
 
@@ -71,25 +73,23 @@ def parse_emapper(input_file, sample_folder, file_prefix):
 
 # Function to run KEGG-Decoder and process the output
 def run_kegg_decoder(input_file, sample_folder, file_prefix):
-    print(f"Running KEGG-Decoder on {file_prefix}...")
+    _log.info("Running KEGG-Decoder on %s", file_prefix)
 
     output_file = os.path.join(sample_folder, f"{file_prefix}_pathways.tsv")
 
-    package_dir = Path(__file__).resolve().parent  # Directory of the current script
+    package_dir = Path(__file__).resolve().parent
     kegg_decoder_script = package_dir / "KEGG_decoder.py"
     _ensure_kegg_decoder(kegg_decoder_script)
 
-    # Run KEGG-Decoder via subprocess with progress bar
     with tqdm(total=1, desc="Executing KEGG-Decoder") as pbar:
         command = [
             "python",
-            str(kegg_decoder_script),  # Path to KEGG_decoder.py
+            str(kegg_decoder_script),
             "-i",
             input_file,
             "-o",
             output_file,
         ]
-        # Run the command and wait for it to finish
         subprocess.run(command, check=True)
         pbar.update(1)
 
@@ -105,7 +105,6 @@ def run_kegg_decoder(input_file, sample_folder, file_prefix):
         lines[0] = "\t".join(processed_first_line) + "\n"
 
     content = "".join(lines)
-
     content = content.replace("SAMPLE", file_prefix)
 
     with open(output_file, "w") as file:
@@ -116,42 +115,33 @@ def run_kegg_decoder(input_file, sample_folder, file_prefix):
 
 # Function to merge all output files into a single TSV file
 def merge_outputs(output_folder):
-    print("Merging all KEGG-Decoder output files...")
+    _log.info("Merging all KEGG-Decoder output files...")
 
-    # Initialize an empty DataFrame for the merged data
     merged_df = pd.DataFrame()
 
-    # Path pattern for finding all *_pathways.tsv files
     output_files = glob.glob(
         os.path.join(output_folder, "temp_files", "*", "*_pathways.tsv")
     )
 
-    # Iterate over each output file
     for file_path in output_files:
-        # Extract sample name by getting the parent directory name
         file_prefix = os.path.splitext(os.path.basename(file_path))[0].replace(
             "_pathways", ""
         )
 
-        # Read each file into a pandas DataFrame
         df = pd.read_csv(file_path, sep="\t", index_col=0)
 
-        # Transpose the DataFrame so that the samples become columns
         df_transposed = df.T
-        df_transposed.columns = [file_prefix]  # Use the cleaned sample name
+        df_transposed.columns = [file_prefix]
 
-        # Initialize the merged DataFrame with function names if empty
         if merged_df.empty:
             merged_df["Function"] = df_transposed.index
 
-        # Merge current sample's data into the merged DataFrame
         merged_df = pd.merge(
             merged_df, df_transposed, left_on="Function", right_index=True, how="outer"
         )
 
-    # Save the merged DataFrame
     merged_output_file = os.path.join(output_folder, "merged_pathways.tsv")
     merged_df.to_csv(merged_output_file, sep="\t", index=False)
-    print(f"Files merged successfully into '{merged_output_file}'.")
+    _log.info("Files merged successfully into '%s'.", merged_output_file)
 
     return merged_df
