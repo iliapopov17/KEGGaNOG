@@ -1,3 +1,6 @@
+import logging
+import warnings
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -9,10 +12,12 @@ from .heatmaps_common import (
     split_dataframe_into_three_row_segments,
 )
 
+_log = logging.getLogger(__name__)
+
 
 # Function to generate the heatmap
 def generate_heatmap_multi(kegg_decoder_file, output_folder, dpi, color, figsize=None):
-    print("Generating heatmap...")
+    _log.info("Generating heatmap...")
 
     # Process data for heatmap with progress bar
     with tqdm(total=3, desc="Preparing heatmap data") as pbar:
@@ -72,7 +77,11 @@ def generate_heatmap_multi(kegg_decoder_file, output_folder, dpi, color, figsize
         axes[1].set_ylabel("")
         axes[2].set_ylabel("")
 
-    plt.tight_layout(rect=[0, 0, 0.9, 1])
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, message=".*tight_layout.*"
+        )
+        plt.tight_layout(rect=(0, 0, 0.9, 1))
     save_heatmap_png(output_folder, dpi)
 
     return fig, axes
