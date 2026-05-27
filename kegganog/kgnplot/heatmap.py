@@ -2,6 +2,7 @@ import contextlib
 import io
 import shutil
 import tempfile
+import warnings
 
 import matplotlib.pyplot as plt
 
@@ -17,11 +18,9 @@ from .base import KgnPlotBase
 def silent_plot_and_tqdm():
     import tqdm
 
-    # Backup originals
     original_show = plt.show
     original_tqdm = tqdm.tqdm
 
-    # Define no-op versions
     plt.show = lambda *args, **kwargs: None
 
     class SilentTqdm(tqdm.tqdm):
@@ -31,7 +30,6 @@ def silent_plot_and_tqdm():
 
     tqdm.tqdm = SilentTqdm
 
-    # Optionally silence stdout/stderr
     with (
         contextlib.redirect_stdout(io.StringIO()),
         contextlib.redirect_stderr(io.StringIO()),
@@ -39,7 +37,6 @@ def silent_plot_and_tqdm():
         try:
             yield
         finally:
-            # Restore originals
             plt.show = original_show
             tqdm.tqdm = original_tqdm
 
@@ -92,10 +89,8 @@ def heatmap(
         (True, False): generate_heatmap_multi,
     }[(not is_single, group)]
 
-    # Use temporary output folder
     output_folder = tempfile.mkdtemp()
 
-    # Run selected function
     with silent_plot_and_tqdm():
         if heatmap_function in [generate_heatmap, generate_grouped_heatmap]:
             fig, ax = heatmap_function(
@@ -108,8 +103,10 @@ def heatmap(
                 annot=annot,
             )
         else:
-            print(
-                "Remember: The 'sample_name' and 'annot' arguments are ignored for multi-heatmaps."
+            warnings.warn(
+                "The 'sample_name' and 'annot' arguments are ignored for multi-heatmaps.",
+                UserWarning,
+                stacklevel=2,
             )
             fig, ax = heatmap_function(
                 kegg_decoder_file=df,
