@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -209,7 +211,11 @@ def generate_grouped_heatmap_multi(
         )  # Align labels
 
     # Layout adjustments
-    plt.tight_layout(rect=[0, 0, 0.9, 1])
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, message=".*tight_layout.*"
+        )
+        plt.tight_layout(rect=(0, 0, 0.9, 1))
     save_heatmap_png(output_folder, dpi)
 
     return fig, axes
