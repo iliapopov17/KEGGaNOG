@@ -42,31 +42,34 @@ pip install kegganog
 ### Command-line mode
 
 ```
-usage: KEGGaNOG [-h] [-M] -i INPUT -o OUTPUT [-overwrite] [-dpi DPI]
-                [-c COLOR] [-n NAME] [-g] [-V]
-
-KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.
-
-options:
-  -h, --help            show this help message and exit
-  -M, --multi           “Multi” mode allows to run KEGGaNOG on multiple
-                        eggNOG-mapper annotation files (a text file with file
-                        location paths must be passed to the input)
-  -i INPUT, --input INPUT
-                        Path to eggNOG-mapper annotation file
-  -o OUTPUT, --output OUTPUT
-                        Output folder to save results
-  -overwrite, --overwrite
-                        Overwrite the output directory if it already exists
-  -dpi DPI, --dpi DPI   DPI for the output image (default: 300)
-  -c COLOR, --color COLOR, --colour COLOR
-                        Cmap for seaborn heatmap. Recommended options: Greys,
-                        Purples, Blues, Greens, Oranges, Reds (default: Blues)
-  -n NAME, --name NAME  Sample name for labeling (default: SAMPLE) (not active
-                        in `--multi` mode)
-  -g, --group           Group the heatmap based on predefined categories
-  -V, --version         show program's version number and exit
-  --web                 Launch local web UI in browser at http://localhost:8000
+Usage: KEGGaNOG [OPTIONS]                                                      
+                                                                                
+ KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.       
+                                                                                
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --input      -i              TEXT     Path to eggNOG-mapper annotation file. │
+│ --output     -o              TEXT     Output folder to save results.         │
+│ --multi      -M                       Run KEGGaNOG in multi mode with        │
+│                                       multiple eggNOG-mapper annotation      │
+│                                       files.                                 │
+│ --overwrite  -overwrite               Overwrite the output directory if it   │
+│                                       already exists.                        │
+│ --dpi        -dpi            INTEGER  DPI for the output image (default:     │
+│                                       300).                                  │
+│                                       [default: 300]                         │
+│ --color      -c              TEXT     Cmap for seaborn heatmap (default:     │
+│                                       Blues).                                │
+│                                       [default: Blues]                       │
+│ --name       -n              TEXT     Sample name for labeling (default:     │
+│                                       SAMPLE).                               │
+│                                       [default: SAMPLE]                      │
+│ --group      -g                       Group the heatmap based on predefined  │
+│                                       categories.                            │
+│ --web                                 Launch local web UI in browser at      │
+│                                       http://localhost:8000.                 │
+│ --version    -V                       Show version and exit.                 │
+│ --help       -h                       Show this message and exit.            │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
 🔗 Please visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
