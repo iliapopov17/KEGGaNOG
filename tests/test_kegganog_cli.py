@@ -75,7 +75,7 @@ def test_unsafe_sample_name_exits_one():
 
 def test_web_mode_calls_launch():
     with patch("kegganog.web.launch") as mock_launch:
-        result = runner.invoke(app, ["--web"])
+        _ = runner.invoke(app, ["--web"])
     mock_launch.assert_called_once()
 
 
@@ -104,7 +104,7 @@ def test_output_dir_overwrite(tmp_path):
 
     with patch("kegganog.kegganog.run_single") as mock_run:
         mock_run.return_value = None
-        result = runner.invoke(
+        _ = runner.invoke(
             app,
             ["-i", str(input_file), "-o", str(output_dir), "--overwrite"],
         )
@@ -124,7 +124,7 @@ def test_single_sample_pipeline(tmp_path):
 
     with patch("kegganog.kegganog.run_single") as mock_run:
         mock_run.return_value = None
-        result = runner.invoke(
+        _ = runner.invoke(
             app,
             ["-i", str(input_file), "-o", str(output_dir)],
         )
@@ -139,7 +139,7 @@ def test_single_sample_grouped_pipeline(tmp_path):
 
     with patch("kegganog.kegganog.run_single") as mock_run:
         mock_run.return_value = None
-        result = runner.invoke(
+        _ = runner.invoke(
             app,
             ["-i", str(input_file), "-o", str(output_dir), "-g"],
         )
@@ -160,7 +160,7 @@ def test_multi_mode_calls_runner(tmp_path):
 
     with patch("kegganog.kegganog_multi.MultiSampleRunner.run") as mock_run:
         mock_run.return_value = None
-        result = runner.invoke(
+        _ = runner.invoke(
             app,
             ["-M", "-i", str(input_file), "-o", str(output_dir)],
         )
