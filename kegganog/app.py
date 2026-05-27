@@ -4,10 +4,8 @@ matplotlib.use("Agg")
 
 import asyncio
 import os
-import shutil
 import tempfile
 import uuid
-import zipfile
 from importlib.metadata import version as _metadata_version
 from pathlib import Path
 from typing import List
@@ -18,6 +16,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import ValidationError
 
+from .processing.pipeline import run_multi, run_single
 from .schemas import JobStatus, WebParams
 
 # ---------------------------------------------------------------------------
@@ -36,19 +35,11 @@ app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 
 # ---------------------------------------------------------------------------
 # In-memory job store
-#
-# Keys are job UUIDs (strings).
-# Values are dicts with keys:
-#   status, path, png_path, message, tsv_path, samples, pathways
-#
-# tsv_path  — path to the merged_pathways.tsv (multi) or *_pathways.tsv (single)
-# samples   — list of sample names (multi only), used for ordering UI
-# pathways  — list of pathway names (multi only), used for radarplot UI
 # ---------------------------------------------------------------------------
 
 _jobs: dict[str, dict] = {}
 
-# Upload limits (DoS mitigation). Adjust if legitimate eggNOG outputs exceed this.
+# Upload limits
 MAX_UPLOAD_BYTES_SINGLE = 80 * 1024 * 1024
 MAX_UPLOAD_BYTES_PER_MULTI_FILE = 80 * 1024 * 1024
 MAX_MULTI_UPLOAD_FILES = 64
@@ -60,19 +51,14 @@ _ALLOWED_PLOT_TYPES = frozenset(
 
 
 def _secure_temp_path(suffix: str) -> Path:
-    """Return a closed temp file path (avoids deprecated tempfile.mktemp)."""
+    """Return a closed temp file path."""
     fd, path = tempfile.mkstemp(suffix=suffix)
     os.close(fd)
     return Path(path)
 
 
 def _safe_client_filename(filename: str | None) -> str:
-    """
-    Reduce path-traversal / odd names from multipart uploads to a single basename.
-
-    eggNOG-mapper files are typically like ``sample.emapper.annotations``; we only
-    keep the last path segment and drop empty or dot-only names.
-    """
+    """Reduce path-traversal / odd names from multipart uploads to a single basename."""
     raw = (filename or "").strip() or "sample.annotations"
     base = Path(raw).name
     if not base or base in {".", ".."}:
@@ -176,9 +162,7 @@ async def run_analysis_multi(
     if len(files) > MAX_MULTI_UPLOAD_FILES:
         return JSONResponse(
             status_code=413,
-            content={
-                "detail": [f"Too many files (max {MAX_MULTI_UPLOAD_FILES})."],
-            },
+            content={"detail": [f"Too many files (max {MAX_MULTI_UPLOAD_FILES})."]},
         )
     try:
         params = WebParams(dpi=dpi, color=color, sample_name="MULTI", group=group)
@@ -382,9 +366,9 @@ async def run_viz(
     edge_cmap: str = Form(default="coolwarm"),
     cbar_size: float = Form(default=0.5),
     # ---- radarplot-specific ----
-    pathways_selected: str = Form(default=""),  # JSON array string
-    colors_selected: str = Form(default=""),  # JSON array string
-    sample_order: str = Form(default=""),  # JSON array string
+    pathways_selected: str = Form(default=""),
+    colors_selected: str = Form(default=""),
+    sample_order: str = Form(default=""),
     fill_alpha: float = Form(default=0.25),
     line_width: float = Form(default=2.0),
     line_style: str = Form(default="solid"),
@@ -535,9 +519,24 @@ async def _run_job(job_id: str, file_bytes: bytes, params: WebParams) -> None:
     loop = asyncio.get_event_loop()
     try:
         result = await loop.run_in_executor(
-            None, _blocking_analysis, file_bytes, params
+            None,
+            run_single,
+            file_bytes,
+            params.sample_name,
+            params.dpi,
+            params.color,
+            params.group,
         )
-        _jobs[job_id].update({"status": "done", **result})
+        _jobs[job_id].update(
+            {
+                "status": "done",
+                "path": result.zip_path,
+                "png_path": result.png_path,
+                "tsv_path": result.tsv_path,
+                "samples": result.samples,
+                "pathways": result.pathways,
+            }
+        )
     except Exception as e:
         _jobs[job_id].update({"status": "error", "message": str(e)})
 
@@ -549,151 +548,25 @@ async def _run_job_multi(
     loop = asyncio.get_event_loop()
     try:
         result = await loop.run_in_executor(
-            None, _blocking_analysis_multi, named_files, params
+            None,
+            run_multi,
+            named_files,
+            params.dpi,
+            params.color,
+            params.group,
         )
-        _jobs[job_id].update({"status": "done", **result})
+        _jobs[job_id].update(
+            {
+                "status": "done",
+                "path": result.zip_path,
+                "png_path": result.png_path,
+                "tsv_path": result.tsv_path,
+                "samples": result.samples,
+                "pathways": result.pathways,
+            }
+        )
     except Exception as e:
         _jobs[job_id].update({"status": "error", "message": str(e)})
-
-
-# ---------------------------------------------------------------------------
-# Blocking analysis functions (run in worker threads)
-# ---------------------------------------------------------------------------
-
-
-def _pack_results(output_dir: Path) -> tuple[str, str]:
-    png_files = list(output_dir.rglob("*.png"))
-    if not png_files:
-        raise FileNotFoundError(
-            "KEGGaNOG finished but produced no PNG file. "
-            "Check that the input file is a valid eggNOG-mapper annotation."
-        )
-    stable_png = _secure_temp_path(".png")
-    shutil.copy2(png_files[0], stable_png)
-
-    stable_zip = _secure_temp_path(".zip")
-    with zipfile.ZipFile(stable_zip, "w", zipfile.ZIP_DEFLATED) as zf:
-        for result_file in output_dir.rglob("*"):
-            if result_file.is_file():
-                zf.write(result_file, result_file.relative_to(output_dir))
-
-    return str(stable_zip), str(stable_png)
-
-
-def _blocking_analysis(file_bytes: bytes, params: WebParams) -> dict:
-    from .cheatmaps import grouped_heatmap, simple_heatmap
-    from .processing import data_processing
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        input_file = tmpdir / "input.annotations"
-        input_file.write_bytes(file_bytes)
-
-        output_dir = tmpdir / "output"
-        output_dir.mkdir()
-        temp_folder = output_dir / "temp_files"
-        temp_folder.mkdir()
-
-        parsed_file = data_processing.parse_emapper(str(input_file), str(temp_folder))
-        kegg_decoder_file = data_processing.run_kegg_decoder(
-            parsed_file, str(output_dir), params.sample_name
-        )
-
-        if params.group:
-            grouped_heatmap.generate_grouped_heatmap(
-                kegg_decoder_file,
-                str(output_dir),
-                params.dpi,
-                params.color,
-                params.sample_name,
-            )
-        else:
-            simple_heatmap.generate_heatmap(
-                kegg_decoder_file,
-                str(output_dir),
-                params.dpi,
-                params.color,
-                params.sample_name,
-            )
-
-        # Read TSV to extract pathway list for viz
-        df = pd.read_csv(kegg_decoder_file, sep="\t", index_col=0)
-        pathways = list(df.columns)
-
-        # Copy TSV to a stable path for later viz calls
-        stable_tsv = _secure_temp_path(".tsv")
-        shutil.copy2(kegg_decoder_file, stable_tsv)
-
-        zip_path, png_path = _pack_results(output_dir)
-
-    return {
-        "path": zip_path,
-        "png_path": png_path,
-        "tsv_path": str(stable_tsv),
-        "samples": [params.sample_name],
-        "pathways": pathways,
-    }
-
-
-def _blocking_analysis_multi(
-    named_files: list[tuple[str, bytes]], params: WebParams
-) -> dict:
-    from .cheatmaps import grouped_heatmap_multi, simple_heatmap_multi
-    from .processing import data_processing_multi
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir = Path(tmpdir)
-        output_dir = tmpdir / "output"
-        output_dir.mkdir()
-        temp_folder = output_dir / "temp_files"
-        temp_folder.mkdir()
-
-        for filename, file_bytes in named_files:
-            file_prefix = filename.replace(".emapper.annotations", "")
-            file_prefix = Path(file_prefix).stem if "." in file_prefix else file_prefix
-
-            sample_folder = temp_folder / file_prefix
-            sample_folder.mkdir(exist_ok=True)
-
-            input_file = sample_folder / filename
-            input_file.write_bytes(file_bytes)
-
-            parsed_file = data_processing_multi.parse_emapper(
-                str(input_file), str(sample_folder), file_prefix
-            )
-            data_processing_multi.run_kegg_decoder(
-                parsed_file, str(sample_folder), file_prefix
-            )
-
-        merged_df = data_processing_multi.merge_outputs(str(output_dir))
-
-        if params.group:
-            grouped_heatmap_multi.generate_grouped_heatmap_multi(
-                merged_df, str(output_dir), params.dpi, params.color
-            )
-        else:
-            simple_heatmap_multi.generate_heatmap_multi(
-                merged_df, str(output_dir), params.dpi, params.color
-            )
-
-        # Extract sample and pathway names for viz UI
-        samples = [c for c in merged_df.columns if c != "Function"]
-        pathways = list(merged_df["Function"].dropna().unique())
-
-        # Save merged TSV to stable path for later viz calls
-        stable_tsv = _secure_temp_path(".tsv")
-        merged_tsv = output_dir / "merged_pathways.tsv"
-        shutil.copy2(merged_tsv, stable_tsv)
-
-        zip_path, png_path = _pack_results(output_dir)
-
-    return {
-        "path": zip_path,
-        "png_path": png_path,
-        "tsv_path": str(stable_tsv),
-        "samples": samples,
-        "pathways": pathways,
-    }
 
 
 # ---------------------------------------------------------------------------
@@ -791,7 +664,6 @@ def _blocking_viz(
 
     df = pd.read_csv(tsv_path, sep="\t")
 
-    # Apply sample ordering if provided (multi plots)
     if sample_order:
         ordered_cols = ["Function"] + [s for s in sample_order if s in df.columns]
         remaining = [c for c in df.columns if c not in ordered_cols]
@@ -990,10 +862,11 @@ def _blocking_viz(
         )
 
     elif plot_type == "heatmap":
-        # Re-render heatmap from existing TSV with (optionally) reordered samples.
-        # Detect single vs multi by checking whether a "Function" column exists.
         is_multi = "Function" in df.columns
         try:
+            import shutil
+            import tempfile
+
             with tempfile.TemporaryDirectory() as hm_tmp:
                 hm_tmp = Path(hm_tmp)
                 if is_multi:

@@ -1,106 +1,64 @@
-import argparse
-import os
+from __future__ import annotations
 
-from .cheatmaps import grouped_heatmap_multi, simple_heatmap_multi
-from .processing import data_processing_multi
+import logging
+from dataclasses import dataclass
+from pathlib import Path
+
+from .processing.pipeline import PipelineResult, run_multi
+
+_log = logging.getLogger(__name__)
 
 
-# Main function to handle different types of inputs and manage output locations
-def main():
-    parser = argparse.ArgumentParser(
-        description="Process eggnog-mapper outputs with KEGG-Decoder."
-    )
-    parser.add_argument(
-        "-M",
-        "--multi",
-        action="store_true",
-        help="Multiple inputs",
-    )
-    parser.add_argument(
-        "-i",
-        "--input",
-        required=True,
-        help="Input file or text file with paths to input files.",
-    )
-    parser.add_argument(
-        "-o", "--output", required=True, help="Directory for final output files."
-    )
-    parser.add_argument(
-        "-overwrite",
-        "--overwrite",
-        action="store_true",
-        help="Overwrite the output directory if it already exists",
-    )
-    parser.add_argument(
-        "-dpi",
-        "--dpi",
-        type=int,
-        default=300,
-        help="DPI for the output image (default: 300)",
-    )
-    parser.add_argument(
-        "-c",
-        "--color",
-        "--colour",
-        default="Blues",
-        help="Cmap for seaborn heatmap. Recommended options: Greys, Purples, Blues, Greens, Oranges, Reds (default: Blues)",
-    )
-    parser.add_argument(
-        "-g",
-        "--group",
-        action="store_true",
-        help="Group the heatmap based on predefined categories",
-    )
-    args = parser.parse_args()
+@dataclass
+class MultiSampleRunner:
+    """
+    Orchestrates the multi-sample CLI pipeline.
 
-    # Create output and temp directories
+    Responsibilities:
+    - Resolve input file paths from a single path or a .txt list.
+    - Read file bytes from disk.
+    - Delegate processing to pipeline.run_multi().
 
-    temp_folder = os.path.join(args.output, "temp_files")
-    os.makedirs(temp_folder, exist_ok=True)
+    Parameters:
+    - input_path: Path to a single annotation file or a .txt file
+                  containing one annotation file path per line.
+    - output_dir: Directory where results will be saved.
+    - dpi: Resolution of the output image.
+    - color: Seaborn colormap name.
+    - group: Whether to use grouped heatmap layout.
+    """
 
-    # Check if input is a list of files or a single annotation file
-    if args.input.endswith(".txt"):
-        with open(args.input, "r") as f:
-            file_paths = [line.strip() for line in f if line.strip()]
-    else:
-        file_paths = [args.input]
+    input_path: str
+    output_dir: str
+    dpi: int = 300
+    color: str = "Blues"
+    group: bool = False
 
-    # Process each annotation file in the list
-    for file_path in file_paths:
-        # Check if the file exists to avoid errors
-        if not os.path.isfile(file_path):
-            print(f"Error: Input file {file_path} does not exist. Skipping.")
-            continue
-
-        # Extract the file prefix (e.g., "D1" from "D1.emapper.annotations")
-        file_prefix = os.path.basename(file_path).replace(".emapper.annotations", "")
-
-        # Create a subdirectory for each file prefix in temp_files
-        sample_folder = os.path.join(temp_folder, file_prefix)
-        os.makedirs(sample_folder, exist_ok=True)
-
-        # Parse and run KEGG-Decoder
-        parsed_file = data_processing_multi.parse_emapper(
-            file_path, sample_folder, file_prefix
-        )
-        data_processing_multi.run_kegg_decoder(parsed_file, sample_folder, file_prefix)
-
-    # Merge all KEGG-Decoder output files
-    kegg_decoder_file = data_processing_multi.merge_outputs(args.output)
-
-    if args.group:
-        # Define group labels, for simplicity let's assume you have them in your dataset
-        grouped_heatmap_multi.generate_grouped_heatmap_multi(
-            kegg_decoder_file, args.output, args.dpi, args.color
-        )
-    else:
-        # Otherwise, generate a normal heatmap
-        simple_heatmap_multi.generate_heatmap_multi(
-            kegg_decoder_file, args.output, args.dpi, args.color
+    def run(self) -> PipelineResult:
+        """Execute the full multi-sample pipeline. Returns PipelineResult."""
+        named_files = self._load_files()
+        return run_multi(
+            named_files=named_files,
+            dpi=self.dpi,
+            color=self.color,
+            group=self.group,
+            output_dir=self.output_dir,
         )
 
-    # print(f"Heatmap saved in {args.output}/heatmap_figure.png")
+    def _collect_input_paths(self) -> list[str]:
+        """Return a list of annotation file paths from a .txt list or a single path."""
+        if self.input_path.endswith(".txt"):
+            with open(self.input_path) as fh:
+                return [line.strip() for line in fh if line.strip()]
+        return [self.input_path]
 
-
-if __name__ == "__main__":
-    main()
+    def _load_files(self) -> list[tuple[str, bytes]]:
+        """Read each annotation file from disk. Skips missing files with a warning."""
+        named_files: list[tuple[str, bytes]] = []
+        for file_path in self._collect_input_paths():
+            fp = Path(file_path)
+            if not fp.is_file():
+                _log.warning("Input file %s does not exist. Skipping.", file_path)
+                continue
+            named_files.append((fp.name, fp.read_bytes()))
+        return named_files

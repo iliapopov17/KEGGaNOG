@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -417,7 +419,11 @@ def generate_grouped_heatmap(
             ax.set_yticklabels(ax.get_yticklabels(), rotation=0, va="center", ha="left")
 
         # Layout adjustments
-        plt.tight_layout(rect=[0, 0, 0.9, 1])
+        with warnings.catch_warnings():
+            warnings.filterwarnings(
+                "ignore", category=UserWarning, message=".*tight_layout.*"
+            )
+            plt.tight_layout(rect=(0, 0, 0.9, 1))
 
     save_heatmap_png(output_folder, dpi)
 

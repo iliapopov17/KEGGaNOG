@@ -1,3 +1,5 @@
+import warnings
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -73,7 +75,11 @@ def generate_heatmap(
         axes[1].set_ylabel("")
         axes[2].set_ylabel("")
 
-    plt.tight_layout(rect=[0, 0, 0.9, 1])
+    with warnings.catch_warnings():
+        warnings.filterwarnings(
+            "ignore", category=UserWarning, message=".*tight_layout.*"
+        )
+        plt.tight_layout(rect=(0, 0, 0.9, 1))
     save_heatmap_png(output_folder, dpi)
 
     return fig, axes

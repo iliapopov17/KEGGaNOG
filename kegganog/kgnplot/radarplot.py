@@ -1,3 +1,4 @@
+import warnings
 from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
@@ -89,7 +90,11 @@ def radarplot(
     for i, function in enumerate(pathways):
         row = df[df["Function"] == function]
         if row.empty:
-            print(f"Warning: Pathway '{function}' not found in DataFrame. Skipping.")
+            warnings.warn(
+                f"Pathway '{function}' not found in DataFrame. Skipping.",
+                UserWarning,
+                stacklevel=2,
+            )
             continue
         values = row[sample_order].values.flatten().tolist()
         values += values[:1]

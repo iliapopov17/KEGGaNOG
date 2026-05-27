@@ -26,6 +26,7 @@ dependencies = [
     "uvicorn[standard]>=0.29.0",
     "python-multipart>=0.0.9",
     "requests>=2.28.0,<3",
+    "typer>=0.12.0,<1",
 ]
 
 [project.optional-dependencies]
@@ -40,8 +41,8 @@ dev = [
 Homepage = "https://github.com/iliapopov17/KEGGaNOG"
 
 [project.scripts]
-KEGGaNOG = "kegganog.kegganog:main"
-kegganog = "kegganog.kegganog:main"
+KEGGaNOG = "kegganog.kegganog:entry_point"
+kegganog = "kegganog.kegganog:entry_point"
 
 [tool.setuptools.packages.find]
 where = ["."]
@@ -59,3 +60,8 @@ filterwarnings = [
 
 [tool.coverage.run]
 omit = ["*/processing/KEGG_decoder.py"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "if __name__ == .__main__.:",
+]
