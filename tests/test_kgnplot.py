@@ -7,12 +7,13 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 import pytest
+import tqdm as tqdm_mod
 
 from kegganog.kgnplot.barplot import KgnBarplot, barplot
 from kegganog.kgnplot.base import KgnPlotBase
 from kegganog.kgnplot.boxplot import KgnBoxplot, boxplot
 from kegganog.kgnplot.corrnet import KgnCorrnet, correlation_network
-from kegganog.kgnplot.heatmap import KgnHeatmap, heatmap
+from kegganog.kgnplot.heatmap import KgnHeatmap, heatmap, silent_plot_and_tqdm
 from kegganog.kgnplot.radarplot import KgnRadar, radarplot
 from kegganog.kgnplot.stackedbar import KgnStackedBarplot, stacked_barplot
 from kegganog.kgnplot.streamgraph import KgnStreamgraph, streamgraph
@@ -351,3 +352,17 @@ class TestHeatmap:
         out = tmp_path / "heatmap.png"
         result.savefig(str(out))
         assert out.exists()
+
+    def test_silent_plot_and_tqdm_restores_on_exception(self):
+
+        original_show = plt.show
+        original_tqdm = tqdm_mod.tqdm
+
+        try:
+            with silent_plot_and_tqdm():
+                raise RuntimeError("test error")
+        except RuntimeError:
+            pass
+
+        assert plt.show is original_show
+        assert tqdm_mod.tqdm is original_tqdm
