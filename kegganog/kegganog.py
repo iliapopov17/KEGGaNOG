@@ -1,18 +1,24 @@
-import argparse
-import os
+import logging
 import shutil
 import sys
-import warnings
 from importlib.metadata import version as _metadata_version
+from pathlib import Path
+from typing import Optional
 
+import typer
 from pydantic import ValidationError
 
 from . import kegganog_multi
-from .cheatmaps import grouped_heatmap, simple_heatmap
-from .processing import data_processing
+from .processing.pipeline import run_single
 from .schemas import CLIParams
 
-warnings.filterwarnings("ignore", category=UserWarning, message=".*tight_layout.*")
+_log = logging.getLogger(__name__)
+
+app = typer.Typer(
+    name="kegganog",
+    add_completion=False,
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
 
 CITATION_MESSAGE = """
 Thank you for using KEGGaNOG! If you use it in your research, please cite:
@@ -24,189 +30,204 @@ Thank you for using KEGGaNOG! If you use it in your research, please cite:
 """
 
 
-def print_citation():
-    print(CITATION_MESSAGE, file=sys.stderr)
+def print_citation() -> None:
+    print(CITATION_MESSAGE)
 
 
-def main():
-    print("KEGGaNOG by Ilia V. Popov")
+def _version_callback(value: bool) -> None:
+    if value:
+        print(f"KEGGaNOG {_metadata_version('kegganog')}")
+        raise typer.Exit()
 
-    parser = argparse.ArgumentParser(
-        description="KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization."
-    )
 
-    # ------------------------------------------------------------------
-    # Existing arguments — unchanged
-    # ------------------------------------------------------------------
-    parser.add_argument(
-        "-M",
-        "--multi",
-        action="store_true",
-        help="Run KEGGaNOG in multi mode with multiple eggNOG-mapper annotation files",
-    )
-    parser.add_argument(
-        "-i",
-        "--input",
-        required=False,  # Changed: not required when --web is used
-        default=None,
-        help="Path to eggNOG-mapper annotation file",
-    )
-    parser.add_argument(
-        "-o",
-        "--output",
-        required=False,  # Changed: not required when --web is used
-        default=None,
-        help="Output folder to save results",
-    )
-    parser.add_argument(
-        "-overwrite",
-        "--overwrite",
-        action="store_true",
-        help="Overwrite the output directory if it already exists",
-    )
-    parser.add_argument(
-        "-dpi",
-        "--dpi",
-        type=int,
-        default=300,
-        help="DPI for the output image (default: 300)",
-    )
-    parser.add_argument(
-        "-c",
-        "--color",
-        "--colour",
-        default="Blues",
-        help="Cmap for seaborn heatmap (default: Blues)",
-    )
-    parser.add_argument(
-        "-n",
-        "--name",
-        default="SAMPLE",
-        help="Sample name for labeling (default: SAMPLE)",
-    )
-    parser.add_argument(
-        "-g",
-        "--group",
-        action="store_true",
-        help="Group the heatmap based on predefined categories",
-    )
-    parser.add_argument(
-        "-V",
-        "--version",
-        action="version",
-        version=f"%(prog)s {_metadata_version('kegganog')}",
-    )
-
-    # ------------------------------------------------------------------
-    # New argument: --web
-    # Launches the local browser UI instead of running the CLI pipeline.
-    # ------------------------------------------------------------------
-    parser.add_argument(
-        "--web",
-        action="store_true",
-        help="Launch local web UI in browser at http://localhost:8000",
-    )
-
-    args = parser.parse_args()
-
-    # ------------------------------------------------------------------
-    # --web mode: start FastAPI server and open browser, then exit
-    # ------------------------------------------------------------------
-    if args.web:
-        from .web import launch
-
-        launch()
-        return  # launch() blocks until the user presses Ctrl+C
-
-    # ------------------------------------------------------------------
-    # CLI mode: -i and -o are required when not using --web
-    # ------------------------------------------------------------------
-    if args.input is None or args.output is None:
-        parser.error("Arguments -i/--input and -o/--output are required in CLI mode.")
-
-    # ------------------------------------------------------------------
-    # Pydantic validation
-    #
-    # argparse has already converted types (e.g. --dpi 300 → int 300).
-    # Pydantic now checks the values themselves:
-    #   - dpi is between 72 and 600
-    #   - color is one of the six allowed colormaps
-    #   - sample_name has no filesystem-unsafe characters
-    #
-    # If validation fails, we print each error clearly and exit —
-    # no Python traceback shown to the user.
-    # ------------------------------------------------------------------
+def _validate_params(
+    input_path: Optional[str],
+    output_dir: Optional[str],
+    multi: bool,
+    overwrite: bool,
+    dpi: int,
+    color: str,
+    sample_name: str,
+    group: bool,
+) -> CLIParams:
+    """Validate parameters through Pydantic; print errors and exit on failure."""
     try:
-        params = CLIParams(
-            input_path=args.input,
-            output_dir=args.output,
-            multi=args.multi,
-            overwrite=args.overwrite,
-            dpi=args.dpi,
-            color=args.color,
-            sample_name=args.name,
-            group=args.group,
+        return CLIParams(
+            input_path=input_path,
+            output_dir=output_dir,
+            multi=multi,
+            overwrite=overwrite,
+            dpi=dpi,
+            color=color,
+            sample_name=sample_name,
+            group=group,
         )
     except ValidationError as e:
         print("KEGGaNOG: invalid argument value(s):", file=sys.stderr)
         for error in e.errors():
-            # error["loc"] is a tuple like ("dpi",) or ("sample_name",)
             field = error["loc"][0]
             message = error["msg"]
             print(f"  --{field}: {message}", file=sys.stderr)
-        sys.exit(1)
+        raise typer.Exit(code=1)
 
-    # ------------------------------------------------------------------
-    # Pipeline — identical to the original, params.X instead of args.X
-    # ------------------------------------------------------------------
-    if os.path.exists(params.output_dir):
+
+def _prepare_output_dir(params: CLIParams) -> None:
+    """Create the output directory, optionally wiping an existing one."""
+    output_dir = Path(params.output_dir)
+    if output_dir.exists():
         if not params.overwrite:
             raise FileExistsError(
                 f"Output directory '{params.output_dir}' already exists. "
                 "Use --overwrite to overwrite it."
             )
-        else:
-            shutil.rmtree(params.output_dir)
+        shutil.rmtree(output_dir)
 
-    os.makedirs(params.output_dir)
-    temp_folder = os.path.join(params.output_dir, "temp_files")
-    os.makedirs(temp_folder, exist_ok=True)
+    output_dir.mkdir(parents=True)
+    (output_dir / "temp_files").mkdir()
+
+
+def _run_pipeline(params: CLIParams) -> None:
+    """Execute the single-sample analysis pipeline."""
+    input_path = Path(params.input_path)
+    file_bytes = input_path.read_bytes()
+
+    run_single(
+        file_bytes=file_bytes,
+        sample_name=params.sample_name,
+        dpi=params.dpi,
+        color=params.color,
+        group=params.group,
+        output_dir=params.output_dir,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Entry point
+# ---------------------------------------------------------------------------
+
+
+@app.command(
+    help="KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.",
+)
+def main(
+    input_path: Optional[str] = typer.Option(
+        None,
+        "-i",
+        "--input",
+        help="Path to eggNOG-mapper annotation file.",
+    ),
+    output_dir: Optional[str] = typer.Option(
+        None,
+        "-o",
+        "--output",
+        help="Output folder to save results.",
+    ),
+    multi: bool = typer.Option(
+        False,
+        "-M",
+        "--multi",
+        help="Run KEGGaNOG in multi mode with multiple eggNOG-mapper annotation files.",
+    ),
+    overwrite: bool = typer.Option(
+        False,
+        "-overwrite",
+        "--overwrite",
+        help="Overwrite the output directory if it already exists.",
+    ),
+    dpi: int = typer.Option(
+        300,
+        "-dpi",
+        "--dpi",
+        help="DPI for the output image (default: 300).",
+    ),
+    color: str = typer.Option(
+        "Blues",
+        "-c",
+        "--color",
+        help="Cmap for seaborn heatmap (default: Blues).",
+    ),
+    sample_name: str = typer.Option(
+        "SAMPLE",
+        "-n",
+        "--name",
+        help="Sample name for labeling (default: SAMPLE).",
+    ),
+    group: bool = typer.Option(
+        False,
+        "-g",
+        "--group",
+        help="Group the heatmap based on predefined categories.",
+    ),
+    web: bool = typer.Option(
+        False,
+        "--web",
+        help="Launch local web UI in browser at http://localhost:8000.",
+    ),
+    version: Optional[bool] = typer.Option(
+        None,
+        "-V",
+        "--version",
+        callback=_version_callback,
+        is_eager=True,
+        help="Show version and exit.",
+    ),
+) -> None:
+    print("KEGGaNOG by Ilia V. Popov")
+
+    if web:
+        from .web import launch
+
+        launch()
+        return
+
+    if input_path is None or output_dir is None:
+        print(
+            "Error: --input and --output are required in CLI mode.",
+            file=sys.stderr,
+        )
+        raise typer.Exit(code=1)
+
+    params = _validate_params(
+        input_path=input_path,
+        output_dir=output_dir,
+        multi=multi,
+        overwrite=overwrite,
+        dpi=dpi,
+        color=color,
+        sample_name=sample_name,
+        group=group,
+    )
+
+    try:
+        _prepare_output_dir(params)
+    except FileExistsError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        raise typer.Exit(code=1)
 
     if params.multi:
-        kegganog_multi.main()
+        kegganog_multi.MultiSampleRunner(
+            input_path=params.input_path,
+            output_dir=params.output_dir,
+            dpi=params.dpi,
+            color=params.color,
+            group=params.group,
+        ).run()
     else:
-        parsed_filtered_file = data_processing.parse_emapper(
-            params.input_path, temp_folder
-        )
-        kegg_decoder_file = data_processing.run_kegg_decoder(
-            parsed_filtered_file, params.output_dir, params.sample_name
-        )
+        _run_pipeline(params)
 
-        if params.group:
-            grouped_heatmap.generate_grouped_heatmap(
-                kegg_decoder_file,
-                params.output_dir,
-                params.dpi,
-                params.color,
-                params.sample_name,
-            )
-        else:
-            simple_heatmap.generate_heatmap(
-                kegg_decoder_file,
-                params.output_dir,
-                params.dpi,
-                params.color,
-                params.sample_name,
-            )
-
-    print(f"Heatmap saved in {params.output_dir}/heatmap_figure.png")
+    _log.info("Heatmap saved in %s/heatmap_figure.png", params.output_dir)
     print_citation()
 
 
-if __name__ == "__main__":
+def entry_point() -> None:
+    """Wraps typer app to handle KeyboardInterrupt gracefully."""
     try:
-        main()
+        app()
     except KeyboardInterrupt:
         print("\nExecution interrupted by user.", file=sys.stderr)
         print_citation()
         sys.exit(1)
+
+
+if __name__ == "__main__":
+    entry_point()
