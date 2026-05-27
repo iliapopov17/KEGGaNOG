@@ -13,7 +13,6 @@ import pytest
 from fastapi.testclient import TestClient
 
 from kegganog.app import app
-from kegganog.schemas import WebParams
 
 
 def _minimal_png_bytes() -> bytes:
@@ -82,14 +81,21 @@ def test_status_not_found(client: TestClient) -> None:
 @pytest.mark.asyncio
 async def test_run_completes_with_mocked_pipeline(tmp_path: Path) -> None:
     """Async ASGI client so asyncio.create_task background jobs can finish."""
+    from kegganog.processing.pipeline import PipelineResult
 
-    def fake_blocking(file_bytes: bytes, params: WebParams) -> dict:
-        return _fake_blocking_result(tmp_path)
+    def fake_run_single(file_bytes, sample_name, dpi, color, group, output_dir=None):
+        result = _fake_blocking_result(tmp_path)
+        return PipelineResult(
+            zip_path=result["path"],
+            png_path=result["png_path"],
+            tsv_path=result["tsv_path"],
+            samples=result["samples"],
+            pathways=result["pathways"],
+        )
 
     transport = httpx.ASGITransport(app=app)
     async with httpx.AsyncClient(transport=transport, base_url="http://test") as ac:
-        # Keep patch active until the background task finishes (runs after POST returns).
-        with patch("kegganog.app._blocking_analysis", fake_blocking):
+        with patch("kegganog.app.run_single", fake_run_single):
             r = await ac.post(
                 "/run",
                 files={"file": ("in.tsv", b"dummy", "text/tab-separated-values")},
