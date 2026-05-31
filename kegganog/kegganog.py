@@ -138,19 +138,19 @@ def main(
         300,
         "-dpi",
         "--dpi",
-        help="DPI for the output image (default: 300).",
+        help="DPI for the output image.",
     ),
     color: str = typer.Option(
         "Blues",
         "-c",
         "--color",
-        help="Cmap for seaborn heatmap (default: Blues).",
+        help="Cmap for seaborn heatmap.",
     ),
     sample_name: str = typer.Option(
         "SAMPLE",
         "-n",
         "--name",
-        help="Sample name for labeling (default: SAMPLE).",
+        help="Sample name for labeling.",
     ),
     group: bool = typer.Option(
         False,
