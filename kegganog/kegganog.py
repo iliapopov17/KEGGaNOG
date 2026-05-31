@@ -108,6 +108,7 @@ def _run_pipeline(params: CLIParams) -> None:
 
 @app.command(
     help="KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.",
+    no_args_is_help=True,
 )
 def main(
     input_path: Optional[str] = typer.Option(
