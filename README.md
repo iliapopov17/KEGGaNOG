@@ -54,14 +54,11 @@ Usage: KEGGaNOG [OPTIONS]
 │                                       files.                                 │
 │ --overwrite  -overwrite               Overwrite the output directory if it   │
 │                                       already exists.                        │
-│ --dpi        -dpi            INTEGER  DPI for the output image (default:     │
-│                                       300).                                  │
+│ --dpi        -dpi            INTEGER  DPI for the output image.              │
 │                                       [default: 300]                         │
-│ --color      -c              TEXT     Cmap for seaborn heatmap (default:     │
-│                                       Blues).                                │
+│ --color      -c              TEXT     Cmap for seaborn heatmap.              │
 │                                       [default: Blues]                       │
-│ --name       -n              TEXT     Sample name for labeling (default:     │
-│                                       SAMPLE).                               │
+│ --name       -n              TEXT     Sample name for labeling.              │
 │                                       [default: SAMPLE]                      │
 │ --group      -g                       Group the heatmap based on predefined  │
 │                                       categories.                            │
