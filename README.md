@@ -41,7 +41,7 @@ pip install kegganog
 
 ### Command-line mode
 
-```
+```text
 Usage: KEGGaNOG [OPTIONS]                                                      
                                                                                 
  KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.       
@@ -71,7 +71,6 @@ Usage: KEGGaNOG [OPTIONS]
 
 🔗 Please visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
 
-
 ### Web interface mode
 
 For an interactive, browser-based experience with live preview and advanced visualization options:
@@ -83,6 +82,7 @@ KEGGaNOG --web
 Then open `http://localhost:8000` in your browser.
 
 **Features:**
+
 - **Live preview** — visualize plots in real-time as you adjust parameters
 - **Interactive settings** — no command-line arguments needed; drop files, tweak colors and dimensions through an intuitive UI
 - **Multi-sample analysis** — compare samples using heatmaps, radarplots, correlation networks, stacked bars, and streamgraphs
@@ -91,7 +91,7 @@ Then open `http://localhost:8000` in your browser.
 
 ## Output examples gallery
 
-**Default visualization**
+### Default visualization
 
 |Single mode|Multi mode|
 |-----------|----------|
@@ -99,7 +99,7 @@ Then open `http://localhost:8000` in your browser.
 
 These figures are generated using functional groupping mode (`-g`/`--group`) and `Greens` colormap
 
-**User APIs visualization**
+### User APIs visualization
 
 |[Barplot](https://github.com/iliapopov17/KEGGaNOG/wiki/Barplot-API)|[Boxplot](https://github.com/iliapopov17/KEGGaNOG/wiki/Boxplot-API)|[Radarplot](https://github.com/iliapopov17/KEGGaNOG/wiki/Radarplot-API)|[Correlation Network](https://github.com/iliapopov17/KEGGaNOG/wiki/Correlation-Network-API)|
 |-------|-------|---------|-------------------|
@@ -122,14 +122,6 @@ These figures are generated using functional groupping mode (`-g`/`--group`) and
 ## Tool name background
 
 `KEGGaNOG` stands for “KEGG out of NOG”, highlighting its purpose: extracting KEGG Ortholog annotations from eggNOG’s Non-supervised Orthologous Groups.
-
-## Contributing
-Contributions are welcome! If you have any ideas, bug fixes, or enhancements, feel free to open an issue or submit a pull request.
-
-## Contact
-For any inquiries or support, feel free to contact me via [email](mailto:iljapopov17@gmail.com)
-
-Happy functional annotation! 💻🧬
 
 ## Citation
 
