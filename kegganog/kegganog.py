@@ -1,3 +1,11 @@
+#!/usr/bin/env python3
+"""Main command-line interface entry point for KEGGaNOG.
+
+This module orchestrates the entire KEGGaNOG suite, exposing a unified interface
+for linking eggNOG-mapper functional annotations with KEGG-Decoder metabolic
+pathway reconstructions, supporting both automated workflows and a local web UI.
+"""
+
 import logging
 import shutil
 import sys
@@ -10,17 +18,23 @@ from pydantic import ValidationError
 
 from . import kegganog_multi
 from .processing.pipeline import run_single
-from .schemas import CLIParams
+from .schemas import CLIParams, ValidColor
 
-_log = logging.getLogger(__name__)
+# Initialize module-level isolated logger
+_log: logging.Logger = logging.getLogger(__name__)
 
-app = typer.Typer(
+# Primary Typer application instantiation
+app: typer.Typer = typer.Typer(
     name="kegganog",
     add_completion=False,
     context_settings={"help_option_names": ["-h", "--help"]},
 )
 
-CITATION_MESSAGE = """
+# ===========================================================================
+# Academic Disclosures & Citation
+# ===========================================================================
+
+CITATION_MESSAGE: str = """
 Thank you for using KEGGaNOG! If you use it in your research, please cite:
 
     Popov, I.V., Chikindas, M.L., Venema, K., Ermakov, A.M. and Popov, I.V., 2025.
@@ -31,10 +45,24 @@ Thank you for using KEGGaNOG! If you use it in your research, please cite:
 
 
 def print_citation() -> None:
+    """Print the official academic citation message to standard output."""
     print(CITATION_MESSAGE)
 
 
+# ===========================================================================
+# Internal Helpers & Operational Callbacks
+# ===========================================================================
+
+
 def _version_callback(value: bool) -> None:
+    """Eager callback executing the version flag logic.
+
+    Args:
+        value: Boolean trigger provided by the Typer parameter evaluation.
+
+    Raises:
+        typer.Exit: Gracefully terminates runtime execution upon displaying version.
+    """
     if value:
         print(f"KEGGaNOG {_metadata_version('kegganog')}")
         raise typer.Exit()
@@ -46,11 +74,32 @@ def _validate_params(
     multi: bool,
     overwrite: bool,
     dpi: int,
-    color: str,
+    color: ValidColor,
     sample_name: str,
     group: bool,
 ) -> CLIParams:
-    """Validate parameters through Pydantic; print errors and exit on failure."""
+    """Validate incoming CLI parameters against the Pydantic data engine schema.
+
+    Args:
+        input_path: Source path targeting eggNOG-mapper output tables.
+        output_dir: Destination folder path for generated tables and figures.
+        multi: Flag switching the engine matrix profile run state to multi-sample.
+        overwrite: Overwrite protection bypass toggle.
+        dpi: Target pixel density for visualization layers.
+        color: Valid Seaborn color map palette identifier literal.
+        sample_name: Character string tag representing the sample.
+        group: Flag indicating categorical block clustering for pathways.
+
+    Returns:
+        CLIParams: A validated data container instance.
+
+    Raises:
+        typer.Exit: Terminated with exit code 1 if parsing constraints fail.
+    """
+    # Guarantee to static analyzers that optional paths have been checked and are not None
+    assert input_path is not None
+    assert output_dir is not None
+
     try:
         return CLIParams(
             input_path=input_path,
@@ -72,13 +121,21 @@ def _validate_params(
 
 
 def _prepare_output_dir(params: CLIParams) -> None:
-    """Create the output directory, optionally wiping an existing one."""
-    output_dir = Path(params.output_dir)
+    """Initialize destination directory structures and wipe old records if forced.
+
+    Args:
+        params: Validated runtime parameter container context.
+
+    Raises:
+        FileExistsError: Overwrite protection checkpoint if target space is occupied.
+    """
+    output_dir: Path = Path(params.output_dir)
+
     if output_dir.exists():
         if not params.overwrite:
             raise FileExistsError(
                 f"Output directory '{params.output_dir}' already exists. "
-                "Use --overwrite to overwrite it."
+                "Use --overwrite to bypass overwrite protection."
             )
         shutil.rmtree(output_dir)
 
@@ -87,9 +144,13 @@ def _prepare_output_dir(params: CLIParams) -> None:
 
 
 def _run_pipeline(params: CLIParams) -> None:
-    """Execute the single-sample analysis pipeline."""
-    input_path = Path(params.input_path)
-    file_bytes = input_path.read_bytes()
+    """Execute the single-sample metabolic pathway extraction pipeline.
+
+    Args:
+        params: Validated configuration schema object instance.
+    """
+    input_path: Path = Path(params.input_path)
+    file_bytes: bytes = input_path.read_bytes()
 
     run_single(
         file_bytes=file_bytes,
@@ -101,9 +162,9 @@ def _run_pipeline(params: CLIParams) -> None:
     )
 
 
-# ---------------------------------------------------------------------------
-# Entry point
-# ---------------------------------------------------------------------------
+# ===========================================================================
+# Primary Core CLI Command
+# ===========================================================================
 
 
 @app.command(
@@ -127,7 +188,7 @@ def main(
         False,
         "-M",
         "--multi",
-        help="Run KEGGaNOG in multi mode with multiple eggNOG-mapper annotation files.",
+        help="Run KEGGaNOG in multi-sample cohort profile mode.",
     ),
     overwrite: bool = typer.Option(
         False,
@@ -139,30 +200,30 @@ def main(
         300,
         "-dpi",
         "--dpi",
-        help="DPI for the output image.",
+        help="DPI resolution mapping index for the output image visualization.",
     ),
-    color: str = typer.Option(
+    color: ValidColor = typer.Option(
         "Blues",
         "-c",
         "--color",
-        help="Cmap for seaborn heatmap.",
+        help="Target seaborn color map palette matrix rule.",
     ),
     sample_name: str = typer.Option(
         "SAMPLE",
         "-n",
         "--name",
-        help="Sample name for labeling.",
+        help="Sample identity text string for axis labeling.",
     ),
     group: bool = typer.Option(
         False,
         "-g",
         "--group",
-        help="Group the heatmap based on predefined categories.",
+        help="Group the pathway matrix heatmap rows based on predefined functional categories.",
     ),
     web: bool = typer.Option(
         False,
         "--web",
-        help="Launch local web UI in browser at http://localhost:8000.",
+        help="Launch the interactive local web user interface dashboard at http://localhost:8000.",
     ),
     version: Optional[bool] = typer.Option(
         None,
@@ -170,25 +231,28 @@ def main(
         "--version",
         callback=_version_callback,
         is_eager=True,
-        help="Show version and exit.",
+        help="Show version metadata parameters and exit.",
     ),
 ) -> None:
     print("KEGGaNOG by Ilia V. Popov")
 
+    # Step 1: Intercept execution to delegate control to the Web Engine UI layer if requested
     if web:
         from .web import launch
 
         launch()
         return
 
+    # Step 2: Ensure CLI mandatory parameters are defined
     if input_path is None or output_dir is None:
         print(
-            "Error: --input and --output are required in CLI mode.",
+            "Error: Missing mandatory options '--input' and '--output' in CLI production mode.",
             file=sys.stderr,
         )
         raise typer.Exit(code=1)
 
-    params = _validate_params(
+    # Step 3: Parse parameter configurations through structural typing schema validation
+    params: CLIParams = _validate_params(
         input_path=input_path,
         output_dir=output_dir,
         multi=multi,
@@ -199,13 +263,18 @@ def main(
         group=group,
     )
 
+    # Step 4: Setup local IO environment targets securely
     try:
         _prepare_output_dir(params)
     except FileExistsError as e:
         print(f"Error: {e}", file=sys.stderr)
         raise typer.Exit(code=1)
 
+    # Step 5: Route control context to specialized Single-Sample or Multi-Cohort runner layers
     if params.multi:
+        assert params.input_path is not None
+        assert params.output_dir is not None
+
         kegganog_multi.MultiSampleRunner(
             input_path=params.input_path,
             output_dir=params.output_dir,
@@ -216,16 +285,25 @@ def main(
     else:
         _run_pipeline(params)
 
-    _log.info("Heatmap saved in %s/heatmap_figure.png", params.output_dir)
+    # Step 6: Print analytical tracking metadata summary and citation contracts to the user
+    print("\n[INFO] Pathway reconstruction matrices generated successfully.")
+    print(
+        f"[INFO] Master heatmap image layout exported to: {params.output_dir}/heatmap_figure.png"
+    )
+
     print_citation()
 
 
 def entry_point() -> None:
-    """Wraps typer app to handle KeyboardInterrupt gracefully."""
+    """Consolidated system application execution manager.
+
+    Intercepts runtime execution interrupts and secure context teardowns cleanly
+    to maintain system trace sanity.
+    """
     try:
         app()
     except KeyboardInterrupt:
-        print("\nExecution interrupted by user.", file=sys.stderr)
+        print("\nExecution runtime manually interrupted by user.", file=sys.stderr)
         print_citation()
         sys.exit(1)
 
