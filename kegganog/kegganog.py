@@ -231,7 +231,7 @@ def main(
         "--version",
         callback=_version_callback,
         is_eager=True,
-        help="Show version metadata parameters and exit.",
+        help="Show version and exit.",
     ),
 ) -> None:
     print("KEGGaNOG by Ilia V. Popov")
