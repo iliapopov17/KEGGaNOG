@@ -46,25 +46,42 @@ Usage: KEGGaNOG [OPTIONS]
                                                                                 
  KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.       
                                                                                 
-╭─ Options ────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --input      -i         TEXT                    Path to eggNOG-mapper annotation file.               │
-│ --output     -o         TEXT                    Output folder to saveresults.                        │
-│ --multi      -M                                 Run KEGGaNOG in multi-sample cohort profile mode.    │
-│ --overwrite  -overwrite                         Overwrite the output directory if it already exists. │
-│ --dpi        -dpi       INTEGER                 DPI resolution mapping index for the output          │
-│                                                 image visualization.                                 │
-│                                                 [default: 300]                                       │
-│ --color      -c         [Blues|Greens|Reds|     Target seaborn color map palette matrix rule.        │
-│                         Purples|Greys|Oranges]  [default: Blues]                                     │
-│ --name       -n         TEXT                    Sample identity text string for axis labeling.       │
-│                                                 [default: SAMPLE]                                    │
-│ --group      -g                                 Group the pathway matrix heatmap rows based on       │
-│                                                 predefined functional categories.                    │
-│ --web                                           Launch the interactive local web user interface      │
-│                                                 dashboard at http://localhost:8000.                  │
-│ --version    -V                                 Show version metadata parameters and exit.           │
-│ --help       -h                                 Show this message and exit.                          │
-╰──────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ────────────────────────────────────────────────────────────────────╮
+│ --input      -i              TEXT                    Path to eggNOG-mapper   │
+│                                                      annotation file.        │
+│ --output     -o              TEXT                    Output folder to save   │
+│                                                      results.                │
+│ --multi      -M                                      Run KEGGaNOG in         │
+│                                                      multi-sample cohort     │
+│                                                      profile mode.           │
+│ --overwrite  -overwrite                              Overwrite the output    │
+│                                                      directory if it already │
+│                                                      exists.                 │
+│ --dpi        -dpi            INTEGER                 DPI resolution mapping  │
+│                                                      index for the output    │
+│                                                      image visualization.    │
+│                                                      [default: 300]          │
+│ --color      -c              [Blues|Greens|Reds|Pur  Target seaborn color    │
+│                              ples|Greys|Oranges]     map palette matrix      │
+│                                                      rule.                   │
+│                                                      [default: Blues]        │
+│ --name       -n              TEXT                    Sample identity text    │
+│                                                      string for axis         │
+│                                                      labeling.               │
+│                                                      [default: SAMPLE]       │
+│ --group      -g                                      Group the pathway       │
+│                                                      matrix heatmap rows     │
+│                                                      based on predefined     │
+│                                                      functional categories.  │
+│ --web                                                Launch the interactive  │
+│                                                      local web user          │
+│                                                      interface dashboard at  │
+│                                                      http://localhost:8000.  │
+│ --version    -V                                      Show version metadata   │
+│                                                      parameters and exit.    │
+│ --help       -h                                      Show this message and   │
+│                                                      exit.                   │
+╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
 🔗 Please visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
