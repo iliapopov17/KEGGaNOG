@@ -1,27 +1,35 @@
-"""Tests for kegganog.web (launch + _schedule_browser_open)."""
+"""Tests for kegganog.web — launch() and _open_browser_delayed()."""
 
 from __future__ import annotations
 
 from unittest.mock import patch
 
+from kegganog.web import _open_browser_delayed
 
-def test_schedule_browser_open_opens_correct_url(monkeypatch):
-    opened_urls: list[str] = []
+
+def test_open_browser_delayed_opens_correct_url(monkeypatch):
+    opened: list[str] = []
     monkeypatch.setattr("kegganog.web.time.sleep", lambda _: None)
-    monkeypatch.setattr("webbrowser.open", lambda url: opened_urls.append(url))
+    monkeypatch.setattr("webbrowser.open", lambda url: opened.append(url))
 
-    from kegganog.web import _schedule_browser_open
+    _open_browser_delayed("http://127.0.0.1:8000", 0)
 
-    _schedule_browser_open()
-
-    import time as _time
-
-    _time.sleep(0.1)
-
-    assert opened_urls == ["http://127.0.0.1:8000"]
+    assert opened == ["http://127.0.0.1:8000"]
 
 
-def test_launch_prints_url_and_starts_server(monkeypatch, capsys):
+def test_launch_prints_url_to_stdout(monkeypatch, capsys):
+    monkeypatch.setattr("kegganog.web.time.sleep", lambda _: None)
+    monkeypatch.setattr("webbrowser.open", lambda url: None)
+
+    with patch("uvicorn.run"):
+        from kegganog.web import launch
+
+        launch()
+
+    assert "http://127.0.0.1:8000" in capsys.readouterr().out
+
+
+def test_launch_calls_uvicorn_once(monkeypatch):
     monkeypatch.setattr("kegganog.web.time.sleep", lambda _: None)
     monkeypatch.setattr("webbrowser.open", lambda url: None)
 
@@ -30,12 +38,10 @@ def test_launch_prints_url_and_starts_server(monkeypatch, capsys):
 
         launch()
 
-    captured = capsys.readouterr()
-    assert "http://127.0.0.1:8000" in captured.out
     mock_run.assert_called_once()
 
 
-def test_launch_passes_correct_app_string(monkeypatch):
+def test_launch_passes_correct_app_host_port(monkeypatch):
     monkeypatch.setattr("kegganog.web.time.sleep", lambda _: None)
     monkeypatch.setattr("webbrowser.open", lambda url: None)
 
@@ -44,7 +50,7 @@ def test_launch_passes_correct_app_string(monkeypatch):
 
         launch()
 
-    call_args = mock_run.call_args
-    assert call_args[0][0] == "kegganog.app:app"
-    assert call_args[1]["host"] == "127.0.0.1"
-    assert call_args[1]["port"] == 8000
+    args, kwargs = mock_run.call_args
+    assert args[0] == "kegganog.app:app"
+    assert kwargs["host"] == "127.0.0.1"
+    assert kwargs["port"] == 8000
