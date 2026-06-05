@@ -125,8 +125,8 @@ These figures are generated using functional groupping mode (`-g`/`--group`) and
 
 If you use `KEGGaNOG` in your research, please cite:
 
-[Popov, I.V., Chikindas, M.L., Venema, K., Ermakov, A.M. and Popov, I.V., 2025. 
-KEGGaNOG: A Lightweight Tool for KEGG Module Profiling From Orthology-Based Annotations. 
+[Popov, I.V., Chikindas, M.L., Venema, K., Ermakov, A.M. and Popov, I.V., 2025.
+KEGGaNOG: A Lightweight Tool for KEGG Module Profiling From Orthology-Based Annotations.
 Molecular Nutrition & Food Research, p.e70269.
 doi.org/10.1002/mnfr.70269](https://onlinelibrary.wiley.com/share/author/QAEWYFJAQ6TAZGDW6FJZ?target=10.1002/mnfr.70269)
 
