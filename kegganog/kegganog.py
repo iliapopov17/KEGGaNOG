@@ -236,14 +236,14 @@ def main(
 ) -> None:
     print("KEGGaNOG by Ilia V. Popov")
 
-    # Step 1: Intercept execution to delegate control to the Web Engine UI layer if requested
+    # Intercept execution to delegate control to the Web Engine UI layer if requested
     if web:
         from .web import launch
 
         launch()
         return
 
-    # Step 2: Ensure CLI mandatory parameters are defined
+    # Ensure CLI mandatory parameters are defined
     if input_path is None or output_dir is None:
         print(
             "Error: Missing mandatory options '--input' and '--output' in CLI production mode.",
@@ -251,7 +251,7 @@ def main(
         )
         raise typer.Exit(code=1)
 
-    # Step 3: Parse parameter configurations through structural typing schema validation
+    # Parse parameter configurations through structural typing schema validation
     params: CLIParams = _validate_params(
         input_path=input_path,
         output_dir=output_dir,
@@ -263,14 +263,14 @@ def main(
         group=group,
     )
 
-    # Step 4: Setup local IO environment targets securely
+    # Setup local IO environment targets securely
     try:
         _prepare_output_dir(params)
     except FileExistsError as e:
         print(f"Error: {e}", file=sys.stderr)
         raise typer.Exit(code=1)
 
-    # Step 5: Route control context to specialized Single-Sample or Multi-Cohort runner layers
+    # Route control context to specialized Single-Sample or Multi-Cohort runner layers
     if params.multi:
         assert params.input_path is not None
         assert params.output_dir is not None
@@ -285,12 +285,7 @@ def main(
     else:
         _run_pipeline(params)
 
-    # Step 6: Print analytical tracking metadata summary and citation contracts to the user
-    print("\n[INFO] Pathway reconstruction matrices generated successfully.")
-    print(
-        f"[INFO] Master heatmap image layout exported to: {params.output_dir}/heatmap_figure.png"
-    )
-
+    # Print citation contracts to the user
     print_citation()
 
 
