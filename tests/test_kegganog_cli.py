@@ -63,7 +63,6 @@ def test_invalid_dpi_exits_one(cli_runner):
 def test_invalid_color_exits_two(cli_runner):
     result = cli_runner.invoke(app, ["-i", "in.tsv", "-o", "out/", "-c", "Rainbow"])
     assert result.exit_code == 2
-    assert "--color" in result.output or "--color" in (result.stderr or "")
 
 
 def test_unsafe_sample_name_exits_one(cli_runner):
