@@ -55,7 +55,7 @@ Usage: KEGGaNOG [OPTIONS]
 │                                                 image visualization.                                 │
 │                                                 [default: 300]                                       │
 │ --color      -c         [Blues|Greens|Reds|     Target seaborn color map palette matrix rule.        │
-│                         Purples|Greys|Oranges]  [default: Blues]                                     │      
+│                         Purples|Greys|Oranges]  [default: Blues]                                     │
 │ --name       -n         TEXT                    Sample identity text string for axis labeling.       │
 │                                                 [default: SAMPLE]                                    │
 │ --group      -g                                 Group the pathway matrix heatmap rows based on       │
