@@ -1,23 +1,44 @@
+#!/usr/bin/env python3
+"""FastAPI web application orchestration gateway for KEGGaNOG pipelines.
+
+This module exposes asynchronous endpoints for single- and multi-sample functional
+profile analysis, manages long-running background tasks via thread pools, and serves
+customizable Matplotlib/Seaborn visualization plots.
+"""
+
 import matplotlib
 
+# Force non-interactive Agg backend before any matplotlib sub-modules load
 matplotlib.use("Agg")
 
 import asyncio
+import logging
 import os
+import shutil
 import tempfile
 import uuid
 from importlib.metadata import version as _metadata_version
 from pathlib import Path
-from typing import List
+from typing import Dict, FrozenSet, List, Literal, Optional, Tuple, Union
 
 import pandas as pd
 from fastapi import FastAPI, Form, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from matplotlib import colormaps
 from pydantic import ValidationError
+from starlette.responses import Response
 
 from .processing.pipeline import run_multi, run_single
-from .schemas import JobStatus, WebParams
+from .schemas import JobStatus, ValidColor, WebParams
+
+FontWeight = Literal["normal", "bold", "heavy", "light"]
+FontStyle = Literal["normal", "italic", "oblique"]
+SortOrder = Literal["ascending", "descending"]
+LineStyle = Literal["solid", "dashed", "dashdot", "dotted", "-"]
+HorizontalAlignment = Literal["left", "right", "center"]
+
+_log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # FastAPI application instance
@@ -37,28 +58,29 @@ app.mount("/static", StaticFiles(directory=_static_dir), name="static")
 # In-memory job store
 # ---------------------------------------------------------------------------
 
-_jobs: dict[str, dict] = {}
+# Explicit typing for central tracking registry mapping job UUIDs to properties
+_jobs: Dict[str, Dict[str, Union[str, Optional[Path], List[str]]]] = {}
 
-# Upload limits
-MAX_UPLOAD_BYTES_SINGLE = 80 * 1024 * 1024
-MAX_UPLOAD_BYTES_PER_MULTI_FILE = 80 * 1024 * 1024
-MAX_MULTI_UPLOAD_FILES = 64
-MAX_MULTI_BATCH_BYTES = 400 * 1024 * 1024
+# Upload constraints and boundary allocations
+MAX_UPLOAD_BYTES_SINGLE: int = 80 * 1024 * 1024
+MAX_UPLOAD_BYTES_PER_MULTI_FILE: int = 80 * 1024 * 1024
+MAX_MULTI_UPLOAD_FILES: int = 64
+MAX_MULTI_BATCH_BYTES: int = 400 * 1024 * 1024
 
-_ALLOWED_PLOT_TYPES = frozenset(
+_ALLOWED_PLOT_TYPES: FrozenSet[str] = frozenset(
     {"barplot", "corrnet", "radarplot", "stackedbar", "streamgraph", "heatmap"}
 )
 
 
 def _secure_temp_path(suffix: str) -> Path:
-    """Return a closed temp file path."""
+    """Return a closed secure file path inside the OS temporary storage container."""
     fd, path = tempfile.mkstemp(suffix=suffix)
     os.close(fd)
     return Path(path)
 
 
-def _safe_client_filename(filename: str | None) -> str:
-    """Reduce path-traversal / odd names from multipart uploads to a single basename."""
+def _safe_client_filename(filename: Optional[str]) -> str:
+    """Sanitize path-traversal anomalies out of multi-part uploaded file streams."""
     raw = (filename or "").strip() or "sample.annotations"
     base = Path(raw).name
     if not base or base in {".", ".."}:
@@ -67,7 +89,8 @@ def _safe_client_filename(filename: str | None) -> str:
 
 
 async def _read_upload_with_limit(upload: UploadFile, max_bytes: int) -> bytes:
-    chunks: list[bytes] = []
+    """Read binary chunks sequentially while throwing exceptions if bounds are exceeded."""
+    chunks: List[bytes] = []
     total = 0
     chunk_size = 1024 * 1024
     while True:
@@ -83,8 +106,8 @@ async def _read_upload_with_limit(upload: UploadFile, max_bytes: int) -> bytes:
     return b"".join(chunks)
 
 
-def _normalize_job_id(job_id: str) -> str | None:
-    """Return canonical job id string or None if not a valid UUID."""
+def _normalize_job_id(job_id: str) -> Optional[str]:
+    """Validate input character strings against canonical UUID standards."""
     try:
         return str(uuid.UUID(job_id))
     except ValueError:
@@ -92,12 +115,13 @@ def _normalize_job_id(job_id: str) -> str | None:
 
 
 # ---------------------------------------------------------------------------
-# Route 1: serve the HTML interface
+# Route 1: Serve the HTML user interface
 # ---------------------------------------------------------------------------
 
 
 @app.get("/", response_class=HTMLResponse)
 async def index() -> HTMLResponse:
+    """Render index interface dashboards injection pipeline version variables."""
     html_file = Path(__file__).parent / "static" / "index.html"
     html = html_file.read_text(encoding="utf-8").replace(
         "__VERSION__", _metadata_version("kegganog")
@@ -106,7 +130,7 @@ async def index() -> HTMLResponse:
 
 
 # ---------------------------------------------------------------------------
-# Route 2: single-sample analysis
+# Route 2: Single-sample functional profiling analysis
 # ---------------------------------------------------------------------------
 
 
@@ -114,10 +138,11 @@ async def index() -> HTMLResponse:
 async def run_analysis(
     file: UploadFile,
     dpi: int = Form(default=300),
-    color: str = Form(default="Blues"),
+    color: ValidColor = Form(default="Blues"),
     sample_name: str = Form(default="SAMPLE"),
     group: bool = Form(default=False),
-) -> JobStatus:
+) -> Union[JobStatus, JSONResponse]:
+    """Validate incoming single file parameters and schedule long-running threads."""
     try:
         params = WebParams(dpi=dpi, color=color, sample_name=sample_name, group=group)
     except ValidationError as e:
@@ -144,7 +169,7 @@ async def run_analysis(
 
 
 # ---------------------------------------------------------------------------
-# Route 3: multi-sample analysis
+# Route 3: Multi-sample batch analysis
 # ---------------------------------------------------------------------------
 
 
@@ -152,14 +177,17 @@ async def run_analysis(
 async def run_analysis_multi(
     files: List[UploadFile],
     dpi: int = Form(default=300),
-    color: str = Form(default="Blues"),
+    color: ValidColor = Form(default="Blues"),
     group: bool = Form(default=False),
-) -> JobStatus:
-    if not files:
+) -> Union[JobStatus, JSONResponse]:
+    """Process an uploaded matrix collection array under cumulative memory safeguards."""
+    valid_files = [f for f in files if f.filename and f.filename.strip()]
+    if not valid_files:
         return JSONResponse(
-            status_code=422, content={"detail": ["files: at least one file required."]}
+            status_code=422,
+            content={"detail": ["files: at least one valid file required."]},
         )
-    if len(files) > MAX_MULTI_UPLOAD_FILES:
+    if len(valid_files) > MAX_MULTI_UPLOAD_FILES:
         return JSONResponse(
             status_code=413,
             content={"detail": [f"Too many files (max {MAX_MULTI_UPLOAD_FILES})."]},
@@ -170,9 +198,9 @@ async def run_analysis_multi(
         messages = [f"{err['loc'][0]}: {err['msg']}" for err in e.errors()]
         return JSONResponse(status_code=422, content={"detail": messages})
 
-    named_files: list[tuple[str, bytes]] = []
+    named_files: List[Tuple[str, bytes]] = []
     batch_total = 0
-    for f in files:
+    for f in valid_files:
         try:
             data = await _read_upload_with_limit(f, MAX_UPLOAD_BYTES_PER_MULTI_FILE)
         except ValueError as e:
@@ -200,28 +228,32 @@ async def run_analysis_multi(
 
 
 # ---------------------------------------------------------------------------
-# Route 4: poll job status
+# Route 4: Poll job compilation status
 # ---------------------------------------------------------------------------
 
 
-@app.get("/status/{job_id}", response_model=None)
-async def get_status(job_id: str):
+@app.get("/status/{job_id}")
+async def get_status(job_id: str) -> JSONResponse:
+    """Return runtime step summaries execution states or failure details."""
     nid = _normalize_job_id(job_id)
     if nid is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
     job = _jobs.get(nid)
     if job is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
-    return JobStatus(job_id=nid, status=job["status"], message=job["message"])
+    return JSONResponse(
+        content={"job_id": nid, "status": job["status"], "message": job["message"]}
+    )
 
 
 # ---------------------------------------------------------------------------
-# Route 5: serve the PNG heatmap for in-browser preview
+# Route 5: Serve the PNG canvas for inline client-side web rendering
 # ---------------------------------------------------------------------------
 
 
-@app.get("/preview/{job_id}", response_model=None)
-async def preview(job_id: str):
+@app.get("/preview/{job_id}")
+async def preview(job_id: str) -> Response:
+    """Transmit primary image streams to frontend frame nodes once flagged done."""
     nid = _normalize_job_id(job_id)
     if nid is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
@@ -232,16 +264,17 @@ async def preview(job_id: str):
         return JSONResponse(
             status_code=400, content={"detail": "Analysis not finished yet."}
         )
-    return FileResponse(path=job["png_path"], media_type="image/png")
+    return FileResponse(path=str(job["png_path"]), media_type="image/png")
 
 
 # ---------------------------------------------------------------------------
-# Route 6: download the full results ZIP
+# Route 6: Download the compressed analytical output bundle zip archive
 # ---------------------------------------------------------------------------
 
 
-@app.get("/download/{job_id}", response_model=None)
-async def download(job_id: str):
+@app.get("/download/{job_id}")
+async def download(job_id: str) -> Response:
+    """Pack summary archives down to pipeline consumers on demand."""
     nid = _normalize_job_id(job_id)
     if nid is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
@@ -253,19 +286,20 @@ async def download(job_id: str):
             status_code=400, content={"detail": "Analysis not finished yet."}
         )
     return FileResponse(
-        path=job["path"],
+        path=str(job["path"]),
         media_type="application/zip",
         filename=f"kegganog_{nid[:8]}.zip",
     )
 
 
 # ---------------------------------------------------------------------------
-# Route 7: return sample list (multi jobs only)
+# Route 7: Return sample structural identifiers index maps
 # ---------------------------------------------------------------------------
 
 
-@app.get("/samples/{job_id}", response_model=None)
-async def get_samples(job_id: str):
+@app.get("/samples/{job_id}")
+async def get_samples(job_id: str) -> JSONResponse:
+    """Expose tracked list configurations for dynamic multiselect dropdown lists."""
     nid = _normalize_job_id(job_id)
     if nid is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
@@ -280,12 +314,13 @@ async def get_samples(job_id: str):
 
 
 # ---------------------------------------------------------------------------
-# Route 8: return pathway list (multi jobs only, for radarplot)
+# Route 8: Return parsed category pathways catalogs lists
 # ---------------------------------------------------------------------------
 
 
-@app.get("/pathways/{job_id}", response_model=None)
-async def get_pathways(job_id: str):
+@app.get("/pathways/{job_id}")
+async def get_pathways(job_id: str) -> JSONResponse:
+    """Expose extracted keys facilitating radar axis filtering matrices updates."""
     nid = _normalize_job_id(job_id)
     if nid is None:
         return JSONResponse(status_code=404, content={"detail": "Job not found."})
@@ -300,61 +335,54 @@ async def get_pathways(job_id: str):
 
 
 # ---------------------------------------------------------------------------
-# Route 9: run a visualization API on an existing job's data
+# Route 9: Execute reactive graphic rendering subroutines over static caches
 # ---------------------------------------------------------------------------
 
 
-@app.post("/viz/{job_id}", response_model=None)
+@app.post("/viz/{job_id}")
 async def run_viz(
     job_id: str,
     plot_type: str = Form(...),
-    # ---- shared ----
     dpi: int = Form(default=300),
     figwidth: int = Form(default=0),
     figheight: int = Form(default=0),
     title: str = Form(default=""),
     title_fontsize: float = Form(default=16.0),
     title_color: str = Form(default="black"),
-    title_weight: str = Form(default="normal"),
-    title_style: str = Form(default="normal"),
+    title_weight: FontWeight = Form(default="normal"),
+    title_style: FontStyle = Form(default="normal"),
     background_color: str = Form(default="white"),
-    # ---- axis labels ----
     xlabel: str = Form(default=""),
     xlabel_fontsize: float = Form(default=14.0),
     xlabel_color: str = Form(default="black"),
-    xlabel_weight: str = Form(default="normal"),
-    xlabel_style: str = Form(default="normal"),
+    xlabel_weight: FontWeight = Form(default="normal"),
+    xlabel_style: FontStyle = Form(default="normal"),
     ylabel: str = Form(default=""),
     ylabel_fontsize: float = Form(default=14.0),
     ylabel_color: str = Form(default="black"),
-    ylabel_weight: str = Form(default="normal"),
-    ylabel_style: str = Form(default="normal"),
-    # ---- ticks ----
+    ylabel_weight: FontWeight = Form(default="normal"),
+    ylabel_style: FontStyle = Form(default="normal"),
     xticks_fontsize: float = Form(default=12.0),
     xticks_color: str = Form(default="black"),
-    xticks_weight: str = Form(default="normal"),
-    xticks_style: str = Form(default="normal"),
+    xticks_weight: FontWeight = Form(default="normal"),
+    xticks_style: FontStyle = Form(default="normal"),
     xticks_rotation: float = Form(default=0.0),
-    xticks_ha: str = Form(default="center"),
+    xticks_ha: HorizontalAlignment = Form(default="center"),
     yticks_fontsize: float = Form(default=12.0),
     yticks_color: str = Form(default="black"),
-    yticks_weight: str = Form(default="normal"),
-    yticks_style: str = Form(default="normal"),
-    # ---- grid ----
+    yticks_weight: FontWeight = Form(default="normal"),
+    yticks_style: FontStyle = Form(default="normal"),
     grid: bool = Form(default=True),
     grid_linestyle: str = Form(default="--"),
     grid_alpha: float = Form(default=0.7),
-    # ---- barplot-specific ----
     cmap: str = Form(default=""),
     cmap_range_min: int = Form(default=8),
     cmap_range_max: int = Form(default=30),
-    sort_order: str = Form(default="descending"),
-    # ---- boxplot-specific ----
+    sort_order: SortOrder = Form(default="descending"),
     box_color: str = Form(default="blue"),
     showfliers: bool = Form(default=True),
     grid_color: str = Form(default="gray"),
     grid_linewidth: float = Form(default=0.5),
-    # ---- corrnet-specific ----
     threshold: float = Form(default=0.5),
     node_size: float = Form(default=700.0),
     node_color: str = Form(default="#A3D5FF"),
@@ -362,22 +390,20 @@ async def run_viz(
     node_linewidths: float = Form(default=1.5),
     label_fontsize: float = Form(default=8.0),
     label_color: str = Form(default="#03045E"),
-    label_weight: str = Form(default="normal"),
+    label_weight: FontWeight = Form(default="normal"),
     edge_cmap: str = Form(default="coolwarm"),
     cbar_size: float = Form(default=0.5),
-    # ---- radarplot-specific ----
     pathways_selected: str = Form(default=""),
     colors_selected: str = Form(default=""),
     sample_order: str = Form(default=""),
     fill_alpha: float = Form(default=0.25),
     line_width: float = Form(default=2.0),
-    line_style: str = Form(default="solid"),
+    line_style: LineStyle = Form(default="solid"),
     label_background: str = Form(default=""),
     label_edgecolor: str = Form(default=""),
     label_pad: float = Form(default=1.05),
     show_legend: bool = Form(default=True),
     legend_loc: str = Form(default="upper right"),
-    # ---- stackedbar / streamgraph ----
     bar_width: float = Form(default=0.6),
     edgecolor: str = Form(default="black"),
     edge_linewidth: float = Form(default=0.3),
@@ -385,12 +411,12 @@ async def run_viz(
     legend_fontsize: float = Form(default=9.0),
     legend_bbox_x: float = Form(default=1.05),
     legend_bbox_y: float = Form(default=1.0),
-    # ---- heatmap-specific ----
     heatmap_color: str = Form(default="Blues"),
     heatmap_group: bool = Form(default=False),
     heatmap_sample_name: str = Form(default=""),
     heatmap_dpi: int = Form(default=300),
-):
+) -> Response:
+    """Parse runtime plotting parameters and delegate drawing work to worker threads."""
     import json
 
     if plot_type not in _ALLOWED_PLOT_TYPES:
@@ -409,28 +435,32 @@ async def run_viz(
         return JSONResponse(
             status_code=400, content={"detail": "Analysis not finished yet."}
         )
-    if not job.get("tsv_path"):
+
+    tsv_path_val = job.get("tsv_path")
+    if not tsv_path_val:
         return JSONResponse(
             status_code=400, content={"detail": "No TSV data available for this job."}
         )
 
     def _parse_json_list(s: str) -> list:
-        s = s.strip()
-        if not s:
+        s_clean = s.strip()
+        if not s_clean:
             return []
         try:
-            return json.loads(s)
+            return json.loads(s_clean)
         except Exception:
             return []
 
-    figsize = (figwidth, figheight) if figwidth > 0 and figheight > 0 else None
-
+    figsize = (
+        (float(figwidth), float(figheight)) if figwidth > 0 and figheight > 0 else None
+    )
     loop = asyncio.get_event_loop()
+
     try:
         png_path = await loop.run_in_executor(
             None,
             _blocking_viz,
-            job["tsv_path"],
+            str(tsv_path_val),
             plot_type,
             figsize,
             dpi,
@@ -510,11 +540,12 @@ async def run_viz(
 
 
 # ---------------------------------------------------------------------------
-# Background workers
+# Background threading event execution workers
 # ---------------------------------------------------------------------------
 
 
 async def _run_job(job_id: str, file_bytes: bytes, params: WebParams) -> None:
+    """Execute single parsing inside isolation threads safely recording outputs."""
     _jobs[job_id]["status"] = "running"
     loop = asyncio.get_event_loop()
     try:
@@ -542,8 +573,9 @@ async def _run_job(job_id: str, file_bytes: bytes, params: WebParams) -> None:
 
 
 async def _run_job_multi(
-    job_id: str, named_files: list[tuple[str, bytes]], params: WebParams
+    job_id: str, named_files: List[Tuple[str, bytes]], params: WebParams
 ) -> None:
+    """Execute collection serialization loops mapping structural tabular datasets."""
     _jobs[job_id]["status"] = "running"
     loop = asyncio.get_event_loop()
     try:
@@ -570,84 +602,85 @@ async def _run_job_multi(
 
 
 # ---------------------------------------------------------------------------
-# Blocking visualization function (run in worker thread)
+# Blocking visualization core loop sub-engine
 # ---------------------------------------------------------------------------
 
 
 def _blocking_viz(
     tsv_path: str,
     plot_type: str,
-    figsize,
+    figsize: Optional[Tuple[float, float]],
     dpi: int,
     heatmap_color: str,
     heatmap_group: bool,
     heatmap_sample_name: str,
     heatmap_dpi: int,
-    title,
-    title_fontsize,
-    title_color,
-    title_weight,
-    title_style,
-    background_color,
-    xlabel,
-    xlabel_fontsize,
-    xlabel_color,
-    xlabel_weight,
-    xlabel_style,
-    ylabel,
-    ylabel_fontsize,
-    ylabel_color,
-    ylabel_weight,
-    ylabel_style,
-    xticks_fontsize,
-    xticks_color,
-    xticks_weight,
-    xticks_style,
-    xticks_rotation,
-    xticks_ha,
-    yticks_fontsize,
-    yticks_color,
-    yticks_weight,
-    yticks_style,
-    grid,
-    grid_linestyle,
-    grid_alpha,
-    cmap,
-    cmap_range_min,
-    cmap_range_max,
-    sort_order,
-    box_color,
-    showfliers,
-    grid_color,
-    grid_linewidth,
-    threshold,
-    node_size,
-    node_color,
-    node_edgecolors,
-    node_linewidths,
-    label_fontsize,
-    label_color,
-    label_weight,
-    edge_cmap_name,
-    cbar_size,
-    pathways_selected,
-    colors_selected,
-    sample_order,
-    fill_alpha,
-    line_width,
-    line_style,
-    label_background,
-    label_edgecolor,
-    label_pad,
-    show_legend,
-    legend_loc,
-    bar_width,
-    edgecolor,
-    edge_linewidth,
-    stream_fill_alpha,
-    legend_fontsize,
-    legend_bbox,
+    title: str,
+    title_fontsize: float,
+    title_color: str,
+    title_weight: FontWeight,
+    title_style: FontStyle,
+    background_color: str,
+    xlabel: str,
+    xlabel_fontsize: float,
+    xlabel_color: str,
+    xlabel_weight: FontWeight,
+    xlabel_style: FontStyle,
+    ylabel: str,
+    ylabel_fontsize: float,
+    ylabel_color: str,
+    ylabel_weight: FontWeight,
+    ylabel_style: FontStyle,
+    xticks_fontsize: float,
+    xticks_color: str,
+    xticks_weight: FontWeight,
+    xticks_style: FontStyle,
+    xticks_rotation: float,
+    xticks_ha: HorizontalAlignment,
+    yticks_fontsize: float,
+    yticks_color: str,
+    yticks_weight: FontWeight,
+    yticks_style: FontStyle,
+    grid: bool,
+    grid_linestyle: str,
+    grid_alpha: float,
+    cmap: str,
+    cmap_range_min: int,
+    cmap_range_max: int,
+    sort_order: SortOrder,
+    box_color: str,
+    showfliers: bool,
+    grid_color: str,
+    grid_linewidth: float,
+    threshold: float,
+    node_size: float,
+    node_color: str,
+    node_edgecolors: str,
+    node_linewidths: float,
+    label_fontsize: float,
+    label_color: str,
+    label_weight: FontWeight,
+    edge_cmap_name: str,
+    cbar_size: float,
+    pathways_selected: List[str],
+    colors_selected: List[str],
+    sample_order: List[str],
+    fill_alpha: float,
+    line_width: float,
+    line_style: LineStyle,
+    label_background: Optional[str],
+    label_edgecolor: Optional[str],
+    label_pad: float,
+    show_legend: bool,
+    legend_loc: str,
+    bar_width: float,
+    edgecolor: str,
+    edge_linewidth: float,
+    stream_fill_alpha: float,
+    legend_fontsize: float,
+    legend_bbox: Tuple[float, float],
 ) -> str:
+    """Thread-isolated blocking core drawing dispatcher rendering static PNGs to temporary storage."""
     import matplotlib.pyplot as plt
 
     from .cheatmaps import (
@@ -671,11 +704,10 @@ def _blocking_viz(
 
     title_val = title if title else None
     cmap_val = cmap if cmap else None
-
     out_path = _secure_temp_path(".png")
 
     if plot_type == "barplot":
-        fs = figsize or (8, 12)
+        fs = figsize or (8.0, 12.0)
         plot = bp.barplot(
             df,
             figsize=fs,
@@ -716,12 +748,12 @@ def _blocking_viz(
 
         import matplotlib.cm as mcm
 
-        fs = figsize or (12, 6)
+        fs = figsize or (12.0, 6.0)
         cmap_key = edge_cmap_name or "coolwarm"
         if re.fullmatch(r"[A-Za-z][A-Za-z0-9_]*", cmap_key) and hasattr(mcm, cmap_key):
             edge_cmap_obj = getattr(mcm, cmap_key)
         else:
-            edge_cmap_obj = plt.cm.coolwarm
+            edge_cmap_obj = colormaps["coolwarm"]
         plot = cn.correlation_network(
             df,
             figsize=fs,
@@ -744,18 +776,15 @@ def _blocking_viz(
         )
 
     elif plot_type == "radarplot":
-        fs = figsize or (8, 8)
-        pwlist = pathways_selected if pathways_selected else None
-        if not pwlist:
+        fs = figsize or (8.0, 8.0)
+        if not pathways_selected:
             raise ValueError("Please select 1–4 pathways for the radar plot.")
-        clrs = colors_selected if colors_selected else None
-        sord = sample_order if sample_order else None
         plot = rp.radarplot(
             df,
-            pathways=pwlist,
+            pathways=pathways_selected,
             figsize=fs,
-            colors=clrs,
-            sample_order=sord,
+            colors=colors_selected or None,
+            sample_order=sample_order or None,
             title=title_val,
             title_fontsize=title_fontsize,
             title_color=title_color,
@@ -781,7 +810,7 @@ def _blocking_viz(
         )
 
     elif plot_type == "stackedbar":
-        fs = figsize or (14, 7)
+        fs = figsize or (14.0, 7.0)
         plot = sb.stacked_barplot(
             df,
             figsize=fs,
@@ -821,7 +850,7 @@ def _blocking_viz(
         )
 
     elif plot_type == "streamgraph":
-        fs = figsize or (14, 7)
+        fs = figsize or (14.0, 7.0)
         plot = sg.streamgraph(
             df,
             figsize=fs,
@@ -864,19 +893,16 @@ def _blocking_viz(
     elif plot_type == "heatmap":
         is_multi = "Function" in df.columns
         try:
-            import shutil
-            import tempfile
-
             with tempfile.TemporaryDirectory() as hm_tmp:
-                hm_tmp = Path(hm_tmp)
+                hm_tmp_path = Path(hm_tmp)
                 if is_multi:
                     if heatmap_group:
                         grouped_heatmap_multi.generate_grouped_heatmap_multi(
-                            df, str(hm_tmp), heatmap_dpi, heatmap_color
+                            df, str(hm_tmp_path), heatmap_dpi, heatmap_color
                         )
                     else:
                         simple_heatmap_multi.generate_heatmap_multi(
-                            df, str(hm_tmp), heatmap_dpi, heatmap_color
+                            df, str(hm_tmp_path), heatmap_dpi, heatmap_color
                         )
                 else:
                     sample_name = (
@@ -885,7 +911,7 @@ def _blocking_viz(
                     if heatmap_group:
                         grouped_heatmap.generate_grouped_heatmap(
                             tsv_path,
-                            str(hm_tmp),
+                            str(hm_tmp_path),
                             heatmap_dpi,
                             heatmap_color,
                             sample_name,
@@ -893,12 +919,12 @@ def _blocking_viz(
                     else:
                         simple_heatmap.generate_heatmap(
                             tsv_path,
-                            str(hm_tmp),
+                            str(hm_tmp_path),
                             heatmap_dpi,
                             heatmap_color,
                             sample_name,
                         )
-                png_files = list(hm_tmp.rglob("*.png"))
+                png_files = list(hm_tmp_path.rglob("*.png"))
                 if not png_files:
                     raise FileNotFoundError("Heatmap generation produced no PNG.")
                 shutil.copy2(png_files[0], out_path)
