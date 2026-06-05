@@ -1,138 +1,204 @@
+"""Central orchestration hub managing coordinate execution tracks for KEGGaNOG.
+
+This module exposes unified interface wrappers to execute single-sample or
+multi-sample comparative data extraction flows, handles transient memory files,
+routes tracking parameters, and bundles cross-platform layout packages.
+"""
+
 from __future__ import annotations
 
+import contextlib
+import logging
 import os
 import shutil
 import tempfile
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Generator, Optional
 
 import pandas as pd
 
+from ..schemas import ValidColor
 from .data_processing import parse_emapper, run_kegg_decoder
 from .data_processing_multi import merge_outputs
 from .data_processing_multi import parse_emapper as parse_emapper_multi
 from .data_processing_multi import run_kegg_decoder as run_kegg_decoder_multi
 
+# Initialize module-level isolated logger
+_log: logging.Logger = logging.getLogger(__name__)
+
 # ---------------------------------------------------------------------------
-# Result dataclass
+# Structural Runtime Containers
 # ---------------------------------------------------------------------------
 
 
 @dataclass
 class PipelineResult:
-    zip_path: str
-    png_path: str
-    tsv_path: str
+    """Core container hosting location parameters for runtime pipeline assets.
+
+    Attributes:
+        zip_path: Stable path pointer targeting packaged result archives.
+        png_path: Target layout pointer referencing the primary matrix visualization.
+        tsv_path: Location pointer targeting the structured summary matrix data sheet.
+        samples: Array sequence containing verified sample identity keys.
+        pathways: Sequence hosting discovered functional pathway identifiers.
+    """
+
+    zip_path: Path
+    png_path: Path
+    tsv_path: Path
     samples: list[str] = field(default_factory=list)
     pathways: list[str] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
-# Private helpers
+# Internal Helpers & Packed Asset Handlers
 # ---------------------------------------------------------------------------
 
 
 def _secure_temp_path(suffix: str) -> Path:
-    """Return a closed temp file path."""
+    """Acquire a securely closed, atomic temporary system file pointer.
+
+    Args:
+        suffix: File extension descriptor type assignment.
+
+    Returns:
+        Path: Valid closed location reference pointer inside OS temp storage.
+    """
     fd, path = tempfile.mkstemp(suffix=suffix)
+
     os.close(fd)
     return Path(path)
 
 
-def _pack_results(output_dir: Path) -> tuple[str, str]:
-    """Pack all output files into a ZIP and copy the first PNG to a stable path."""
-    png_files = list(output_dir.rglob("*.png"))
+def _pack_results(output_dir: Path) -> tuple[Path, Path]:
+    """Compress structural result files into centralized deployment package files.
+
+    Args:
+        output_dir: Base directory zone targeting completed profile tables.
+
+    Returns:
+        tuple[Path, Path]: Paired path tokens for the generated (.zip, .png) assets.
+
+    Raises:
+        FileNotFoundError: If evaluation sequences fail to generate matrix charts.
+    """
+    png_files: list[Path] = list(output_dir.rglob("*.png"))
+
     if not png_files:
         raise FileNotFoundError(
-            "KEGGaNOG finished but produced no PNG file. "
-            "Check that the input file is a valid eggNOG-mapper annotation."
+            "Analytical run finished successfully but failed to output visual chart matrices. "
+            "Please verify that your input files contain valid orthology-based functional maps."
         )
-    stable_png = _secure_temp_path(".png")
+
+    stable_png: Path = _secure_temp_path(".png")
     shutil.copy2(png_files[0], stable_png)
 
-    stable_zip = _secure_temp_path(".zip")
+    stable_zip: Path = _secure_temp_path(".zip")
     with zipfile.ZipFile(stable_zip, "w", zipfile.ZIP_DEFLATED) as zf:
         for result_file in output_dir.rglob("*"):
             if result_file.is_file():
                 zf.write(result_file, result_file.relative_to(output_dir))
 
-    return str(stable_zip), str(stable_png)
+    return stable_zip, stable_png
+
+
+@contextlib.contextmanager
+def _resolve_output_context(
+    output_dir: Optional[Path | str],
+) -> Generator[Path, None, None]:
+    """Yield a stable active target directory context matching CLI or Web runstates.
+
+    Args:
+        output_dir: User-specified destination path pointer if in CLI execution mode.
+
+    Yields:
+        Path: Valid workspace folder path context.
+    """
+    if output_dir is not None:
+        out_path: Path = Path(output_dir)
+        out_path.mkdir(parents=True, exist_ok=True)
+        yield out_path
+    else:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            out_path = Path(tmpdir) / "output"
+            out_path.mkdir()
+            yield out_path
+
+
+# ---------------------------------------------------------------------------
+# Core Background Execution Logic Layers
+# ---------------------------------------------------------------------------
 
 
 def _run_single_in_dir(
     file_bytes: bytes,
     sample_name: str,
     dpi: int,
-    color: str,
+    color: ValidColor,
     group: bool,
     output_dir: Path,
-) -> tuple[list[str], list[str], str]:
-    """
-    Core single-sample logic — writes results into output_dir.
-    Returns (samples, pathways, kegg_decoder_file_path).
-    """
+) -> tuple[list[str], list[str], Path]:
+    """Execute single-sample functional table mapping extraction matrix layouts."""
     from ..cheatmaps import grouped_heatmap, simple_heatmap
 
-    temp_folder = output_dir / "temp_files"
+    temp_folder: Path = output_dir / "temp_files"
     temp_folder.mkdir(exist_ok=True)
 
-    input_file = temp_folder / "input.annotations"
+    input_file: Path = temp_folder / "input.annotations"
     input_file.write_bytes(file_bytes)
 
-    kegg_decoder_file = run_kegg_decoder(
-        parse_emapper(str(input_file), str(temp_folder)),
-        str(output_dir),
+    # Decode target sequences utilizing abstracted translation engine components
+    profile_file: Path = run_kegg_decoder(
+        parse_emapper(input_file, temp_folder),
+        output_dir,
         sample_name,
     )
 
     if group:
         grouped_heatmap.generate_grouped_heatmap(
-            kegg_decoder_file, str(output_dir), dpi, color, sample_name
+            str(profile_file), str(output_dir), dpi, color, sample_name
         )
     else:
         simple_heatmap.generate_heatmap(
-            kegg_decoder_file, str(output_dir), dpi, color, sample_name
+            str(profile_file), str(output_dir), dpi, color, sample_name
         )
 
-    df = pd.read_csv(kegg_decoder_file, sep="\t", index_col=0)
-    pathways = list(df.columns)
+    df: pd.DataFrame = pd.read_csv(profile_file, sep="\t", index_col=0)
+    pathways: list[str] = list(df.columns)
 
-    return [sample_name], pathways, kegg_decoder_file
+    return [sample_name], pathways, profile_file
 
 
 def _run_multi_in_dir(
     named_files: list[tuple[str, bytes]],
     dpi: int,
-    color: str,
+    color: ValidColor,
     group: bool,
     output_dir: Path,
-) -> tuple[list[str], list[str], str]:
-    """
-    Core multi-sample logic — writes results into output_dir.
-    Returns (samples, pathways, merged_tsv_path).
-    """
+) -> tuple[list[str], list[str], Path]:
+    """Execute multi-sample comparative cohort evaluation matrices routines."""
     from ..cheatmaps import grouped_heatmap_multi, simple_heatmap_multi
 
-    temp_folder = output_dir / "temp_files"
+    temp_folder: Path = output_dir / "temp_files"
     temp_folder.mkdir(exist_ok=True)
 
     for filename, file_bytes in named_files:
-        file_prefix = filename.replace(".emapper.annotations", "")
-        file_prefix = Path(file_prefix).stem if "." in file_prefix else file_prefix
+        file_prefix: str = filename.replace(".emapper.annotations", "")
+        if "." in file_prefix:
+            file_prefix = Path(file_prefix).stem
 
-        sample_folder = temp_folder / file_prefix
+        sample_folder: Path = temp_folder / file_prefix
         sample_folder.mkdir(exist_ok=True)
 
-        input_file = sample_folder / filename
+        input_file: Path = sample_folder / filename
         input_file.write_bytes(file_bytes)
 
-        parsed_file = parse_emapper_multi(
-            str(input_file), str(sample_folder), file_prefix
-        )
-        run_kegg_decoder_multi(parsed_file, str(sample_folder), file_prefix)
+        parsed_file: Path = parse_emapper_multi(input_file, sample_folder, file_prefix)
+        run_kegg_decoder_multi(parsed_file, sample_folder, file_prefix)
 
-    merged_df = merge_outputs(str(output_dir))
+    merged_df: pd.DataFrame = merge_outputs(output_dir)
 
     if group:
         grouped_heatmap_multi.generate_grouped_heatmap_multi(
@@ -143,15 +209,15 @@ def _run_multi_in_dir(
             merged_df, str(output_dir), dpi, color
         )
 
-    samples = [c for c in merged_df.columns if c != "Function"]
-    pathways = list(merged_df["Function"].dropna().unique())
-    merged_tsv = str(output_dir / "merged_pathways.tsv")
+    samples: list[str] = [c for c in merged_df.columns if c != "Function"]
+    pathways: list[str] = list(merged_df["Function"].dropna().unique())
+    merged_tsv: Path = output_dir / "merged_pathways.tsv"
 
     return samples, pathways, merged_tsv
 
 
 # ---------------------------------------------------------------------------
-# Public API
+# Public Unified Execution Gateways
 # ---------------------------------------------------------------------------
 
 
@@ -159,58 +225,36 @@ def run_single(
     file_bytes: bytes,
     sample_name: str,
     dpi: int,
-    color: str,
+    color: ValidColor,
     group: bool,
-    output_dir: str | None = None,
+    output_dir: Optional[Path | str] = None,
 ) -> PipelineResult:
-    """
-    Full single-sample pipeline.
+    """Execute the full core functional annotation profile pathway pipeline.
 
-    Parameters:
-    - file_bytes: Raw bytes of the eggNOG-mapper annotation file.
-    - sample_name: Label used for the sample in outputs.
-    - dpi: Resolution of the output image.
-    - color: Seaborn colormap name.
-    - group: Whether to use grouped heatmap layout.
-    - output_dir: If provided, write results here (CLI mode).
-                  If None, use a temp directory (web mode).
+    Args:
+        file_bytes: Raw text byte content arrays read from eggNOG source tables.
+        sample_name: Explicit string tag assigned for column index labels.
+        dpi: Pixel configuration layout multiplier applied to matrix charts.
+        color: Target valid seaborn color map palette identifier literal.
+        group: Flag forcing hierarchical visual grouping rows layout.
+        output_dir: Explicit folder directory pointer (CLI mode token), or None
+            to instruct dynamic temporal allocation (Web server UI context mode).
 
     Returns:
-    - PipelineResult with paths to ZIP, PNG, TSV and metadata.
+        PipelineResult: Standard data object referencing assets location markers.
     """
-    if output_dir is not None:
-        # CLI mode — write directly to user-specified directory
-        out = Path(output_dir)
-        out.mkdir(parents=True, exist_ok=True)
-        samples, pathways, kegg_decoder_file = _run_single_in_dir(
+    with _resolve_output_context(output_dir) as out:
+        samples, pathways, profile_file = _run_single_in_dir(
             file_bytes, sample_name, dpi, color, group, out
         )
-        stable_tsv = _secure_temp_path(".tsv")
-        shutil.copy2(kegg_decoder_file, stable_tsv)
-        zip_path, png_path = _pack_results(out)
-        return PipelineResult(
-            zip_path=zip_path,
-            png_path=png_path,
-            tsv_path=str(stable_tsv),
-            samples=samples,
-            pathways=pathways,
-        )
-
-    # Web mode — use temp directory, results survive via stable copies
-    with tempfile.TemporaryDirectory() as tmpdir:
-        out = Path(tmpdir) / "output"
-        out.mkdir()
-        samples, pathways, kegg_decoder_file = _run_single_in_dir(
-            file_bytes, sample_name, dpi, color, group, out
-        )
-        stable_tsv = _secure_temp_path(".tsv")
-        shutil.copy2(kegg_decoder_file, stable_tsv)
+        stable_tsv: Path = _secure_temp_path(".tsv")
+        shutil.copy2(profile_file, stable_tsv)
         zip_path, png_path = _pack_results(out)
 
     return PipelineResult(
         zip_path=zip_path,
         png_path=png_path,
-        tsv_path=str(stable_tsv),
+        tsv_path=stable_tsv,
         samples=samples,
         pathways=pathways,
     )
@@ -219,57 +263,34 @@ def run_single(
 def run_multi(
     named_files: list[tuple[str, bytes]],
     dpi: int,
-    color: str,
+    color: ValidColor,
     group: bool,
-    output_dir: str | None = None,
+    output_dir: Optional[Path | str] = None,
 ) -> PipelineResult:
-    """
-    Full multi-sample pipeline.
+    """Execute the aggregate multi-sample cohort analytical matrix workflow.
 
-    Parameters:
-    - named_files: List of (filename, file_bytes) tuples.
-    - dpi: Resolution of the output image.
-    - color: Seaborn colormap name.
-    - group: Whether to use grouped heatmap layout.
-    - output_dir: If provided, write results here (CLI mode).
-                  If None, use a temp directory (web mode).
+    Args:
+        named_files: Sequence hosting pairs of (filename_string, content_bytes).
+        dpi: Target evaluation layout plot graphic density index.
+        color: Valid Seaborn palette mapping assignment token.
+        group: Toggle routing conditional categorization row structures.
+        output_dir: Target destination workspace root path context pointer.
 
     Returns:
-    - PipelineResult with paths to ZIP, PNG, TSV and metadata.
+        PipelineResult: Consistent metadata structure hosting exported paths tokens.
     """
-    if output_dir is not None:
-        # CLI mode — write directly to user-specified directory
-        out = Path(output_dir)
-        out.mkdir(parents=True, exist_ok=True)
+    with _resolve_output_context(output_dir) as out:
         samples, pathways, merged_tsv = _run_multi_in_dir(
             named_files, dpi, color, group, out
         )
-        stable_tsv = _secure_temp_path(".tsv")
-        shutil.copy2(merged_tsv, stable_tsv)
-        zip_path, png_path = _pack_results(out)
-        return PipelineResult(
-            zip_path=zip_path,
-            png_path=png_path,
-            tsv_path=str(stable_tsv),
-            samples=samples,
-            pathways=pathways,
-        )
-
-    # Web mode — use temp directory, results survive via stable copies
-    with tempfile.TemporaryDirectory() as tmpdir:
-        out = Path(tmpdir) / "output"
-        out.mkdir()
-        samples, pathways, merged_tsv = _run_multi_in_dir(
-            named_files, dpi, color, group, out
-        )
-        stable_tsv = _secure_temp_path(".tsv")
+        stable_tsv: Path = _secure_temp_path(".tsv")
         shutil.copy2(merged_tsv, stable_tsv)
         zip_path, png_path = _pack_results(out)
 
     return PipelineResult(
         zip_path=zip_path,
         png_path=png_path,
-        tsv_path=str(stable_tsv),
+        tsv_path=stable_tsv,
         samples=samples,
         pathways=pathways,
     )

@@ -1,91 +1,112 @@
-from typing import Optional, Tuple
+#!/usr/bin/env python3
+"""Boxplot visualization module for KEGG module completion profiles.
+
+This module builds standalone box-and-whisker plots tracking macro-distribution
+metrics and pathway completeness density alterations across independent samples.
+"""
+
+from typing import Literal, Optional, Tuple
 
 import matplotlib.pyplot as plt
+import pandas as pd
 import seaborn as sns
 
 from .base import KgnPlotBase
 
 
 class KgnBoxplot(KgnPlotBase):
-    pass
+    """Orchestration context wrapper encapsulating Matplotlib boxplot layouts."""
+
+    def __init__(self, fig: plt.Figure, ax: plt.Axes) -> None:
+        """Initialize the boxplot canvas with layout metrics.
+
+        Args:
+            fig: The Matplotlib Figure container hosting the drawing canvas.
+            ax: The core underlying Axes coordinate grid mapper.
+        """
+        super().__init__(fig, ax)
 
 
 def boxplot(
-    df,
-    figsize: Tuple[int, int] = (12, 6),
+    df: pd.DataFrame,
+    figsize: Tuple[float, float] = (12.0, 6.0),
     color: Optional[str] = "blue",
     showfliers: bool = True,
     title: Optional[str] = None,
     title_fontsize: float = 16.0,
     title_color: str = "black",
-    title_weight: str = "normal",
-    title_style: str = "normal",
+    title_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
+    title_style: Literal["normal", "italic", "oblique"] = "normal",
     xlabel: str = "Samples",
     xlabel_fontsize: float = 14.0,
     xlabel_color: str = "black",
-    xlabel_weight: str = "normal",
-    xlabel_style: str = "normal",
+    xlabel_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
+    xlabel_style: Literal["normal", "italic", "oblique"] = "normal",
     ylabel: str = "Completeness Value",
     ylabel_fontsize: float = 14.0,
     ylabel_color: str = "black",
-    ylabel_weight: str = "normal",
-    ylabel_style: str = "normal",
+    ylabel_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
+    ylabel_style: Literal["normal", "italic", "oblique"] = "normal",
     xticks_rotation: float = 45.0,
-    xticks_ha: str = "center",
+    xticks_ha: Literal["left", "right", "center"] = "center",
     xticks_fontsize: float = 12.0,
     xticks_color: str = "black",
-    xticks_weight: str = "normal",
-    xticks_style: str = "normal",
+    xticks_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
+    xticks_style: Literal["normal", "italic", "oblique"] = "normal",
     yticks_fontsize: float = 12.0,
     yticks_color: str = "black",
-    yticks_weight: str = "normal",
-    yticks_style: str = "normal",
+    yticks_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
+    yticks_style: Literal["normal", "italic", "oblique"] = "normal",
     grid: bool = True,
     grid_color: str = "gray",
     grid_linestyle: str = "--",
     grid_linewidth: float = 0.5,
-    background_color: str = "white",
-):
-    """
-    Generates a customizable boxplot to visualize the distribution of pathway completeness across samples.
+    background_color: Optional[str] = "white",
+) -> KgnBoxplot:
+    """Generate a publication-grade customizable boxplot for pathway completeness distributions.
 
-    Parameters:
-    - df: Pandas DataFrame containing the dataset.
-    - figsize: Tuple (width, height) of the figure.
-    - color: Color used for all boxes in the plot. Can be a named color (e.g., "blue"), hex code (e.g., "#1f77b4").
-    - showfliers: Whether to display outlier points.
-    - title: Main title of the plot.
-    - title_fontsize, title_color, title_weight, title_style: Title text styling.
-    - xlabel, ylabel: Axis labels.
-    - xlabel_fontsize, xlabel_color, xlabel_weight, xlabel_style: X-axis label styling.
-    - ylabel_fontsize, ylabel_color, ylabel_weight, ylabel_style: Y-axis label styling.
-    - xticks_rotation, xticks_ha: Rotation angle and alignment of x-axis tick labels.
-    - xticks_fontsize, xticks_color, xticks_weight, xticks_style: X-axis tick label styling.
-    - yticks_fontsize, yticks_color, yticks_weight, yticks_style: Y-axis tick label styling.
-    - grid: Whether to display a grid.
-    - grid_color, grid_linestyle, grid_linewidth: Grid styling.
-    - background_color: Background color of the figure.
+    Parses multi-sample reconstruction matrices, extracts numeric functional metrics,
+    isolates coordinate matrices, and renders statistical quartile boxes profiling variation.
+
+    Args:
+        df: Input DataFrame containing parsed pathway completeness vectors.
+        figsize: Geometric allocation limits (width, height) defining canvas borders.
+        color: Primary uniform filling color hex identifier mapped to individual boxes.
+        showfliers: Flag indicating whether statistical outlier points should be plotted.
+        title: Global text message identifier rendering above the drawing matrix.
+        title_fontsize, title_color, title_weight, title_style: Font properties for title.
+        xlabel, ylabel: Text content values mapping coordinates descriptors.
+        xlabel_fontsize, ylabel_fontsize: Typography scale indices.
+        xlabel_color, ylabel_color: Text color variables mapping target labels.
+        xlabel_weight, ylabel_weight: Structural typographic density metrics.
+        xlabel_style, ylabel_style: Geometric font slope configurations.
+        xticks_rotation, xticks_ha: Position variables mapping target X tick attributes.
+        xticks_fontsize, xticks_color, xticks_weight, xticks_style: X-tick typography rules.
+        yticks_fontsize, yticks_color, yticks_weight, yticks_style: Y-tick typography rules.
+        grid: Toggles background coordinate reference line structures.
+        grid_color: Target color identification hex parameter allocated to grid lines.
+        grid_linestyle: Grid line texture rendering parameter.
+        grid_linewidth: Linear density configuration of background alignment segments.
+        background_color: Primary layout canvas backdrop color mapping.
 
     Returns:
-    - KgnBoxplot: An object containing the boxplot figure and axis for customization or saving.
+        KgnBoxplot: Container instance holding references to optimized figures.
     """
-
-    # Create figure
+    # Initialize structural subplots container canvas layers
     fig, ax = plt.subplots(figsize=figsize, facecolor=background_color)
 
-    # Create boxplot
+    # Map underlying statistical matrices bypassing function label features
     sns.boxplot(data=df.iloc[:, 1:], color=color, showfliers=showfliers, ax=ax)
 
-    # Customize title
-    ax.set_title(
-        title,
-        fontsize=title_fontsize,
-        color=title_color,
-        weight=title_weight,
-        style=title_style,
-    )
-
-    # Customize x-axis label
+    # Apply customized typography parameters to coordinate boundaries
+    if title:
+        ax.set_title(
+            title,
+            fontsize=title_fontsize,
+            color=title_color,
+            weight=title_weight,
+            style=title_style,
+        )
     ax.set_xlabel(
         xlabel,
         fontsize=xlabel_fontsize,
@@ -93,8 +114,6 @@ def boxplot(
         weight=xlabel_weight,
         style=xlabel_style,
     )
-
-    # Customize y-axis label
     ax.set_ylabel(
         ylabel,
         fontsize=ylabel_fontsize,
@@ -103,7 +122,7 @@ def boxplot(
         style=ylabel_style,
     )
 
-    # Customize x-ticks
+    # Configure ticks geometric parameters and close active canvas stream descriptors
     plt.xticks(
         rotation=xticks_rotation,
         ha=xticks_ha,
@@ -113,7 +132,6 @@ def boxplot(
         style=xticks_style,
     )
 
-    # Customize y-ticks
     plt.yticks(
         fontsize=yticks_fontsize,
         color=yticks_color,
@@ -121,9 +139,8 @@ def boxplot(
         style=yticks_style,
     )
 
-    # Grid settings
     if grid:
-        plt.grid(color=grid_color, linestyle=grid_linestyle, linewidth=grid_linewidth)
+        ax.grid(color=grid_color, linestyle=grid_linestyle, linewidth=grid_linewidth)
 
     plt.close(fig)
     return KgnBoxplot(fig, ax)

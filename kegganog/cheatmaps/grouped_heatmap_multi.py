@@ -1,4 +1,12 @@
+#!/usr/bin/env python3
+"""Multi-sample grouped three-panel heatmap generator module for KEGGaNOG.
+
+This module processes composite matrices tracking functional group buckets across multiple
+samples, calculates custom geometric margin pads, and draws unified partitioned panels.
+"""
+
 import warnings
+from typing import Dict, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -17,8 +25,28 @@ from .heatmaps_common import (
 
 
 def generate_grouped_heatmap_multi(
-    kegg_decoder_file, output_folder, dpi, color, figsize=None
-):
+    kegg_decoder_file: pd.DataFrame,
+    output_folder: str,
+    dpi: int,
+    color: str,
+    figsize: Optional[Tuple[float, float]] = None,
+) -> Tuple[plt.Figure, Sequence[plt.Axes]]:
+    """Generate a functional grouped dynamic wide three-panel heatmap for multiple samples.
+
+    Processes multidimensional pathway matrices, dynamically evaluates category margins,
+    injects row spacers, draws parallel subplots, and formats metadata bounding boxes.
+
+    Args:
+        kegg_decoder_file: Input DataFrame containing multi-sample functional profiles.
+        output_folder: Target location identifying active processing directory loops.
+        dpi: Target resolution scale bounding the output drawing canvas.
+        color: Target string colormap descriptor passed to downstream styling engines.
+        figsize: Geometric allocation limits (width, height) defining canvas borders.
+
+    Returns:
+        tuple: Active Matplotlib Figure instance and the coordinate subplots Axes sequence.
+    """
+    # Validate sample elements and map numeric matrices under tracked progress
     with tqdm(total=6, desc="Preparing heatmap data") as pbar:
         function_groups_lower = {
             group: {func.lower() for func in funcs}
@@ -53,7 +81,7 @@ def generate_grouped_heatmap_multi(
         part2_groups = GROUPED_PART2_GROUPS
         part3_groups = GROUPED_PART3_GROUPS
 
-        # Split the dataframe into 3 parts based on the groupings
+        # Reshape layout spreadsheet structure via split operations
         part1 = kegg_decoder_file[
             kegg_decoder_file["Group"].isin(part1_groups)
         ].reset_index(drop=True)
@@ -67,6 +95,7 @@ def generate_grouped_heatmap_multi(
         ].reset_index(drop=True)
         pbar.update(1)
 
+    # Insert artificial NaN spacer rows between category groups
     with tqdm(total=6, desc="Adding split between groups") as pbar:
         part1 = insert_split_rows_between_groups(
             kegg_decoder_file[kegg_decoder_file["Group"].isin(part1_groups)],
@@ -97,28 +126,35 @@ def generate_grouped_heatmap_multi(
         )
         pbar.update(1)
 
+    # Establish dynamic proportional structural canvas limits if missing
     fig_w = 0.5 * (part1.shape[1] - 2) + 27.5
+    target_figsize = figsize if figsize is not None else (fig_w, 20.0)
 
-    if figsize is None:
-        figsize = (fig_w, 20)
-
+    # Mathematical polynomial margin calibration mapping input wide metrics safely
     left_pad = (
         0.20 - 0.0020833 * (part1.shape[1] - 2) + 0.0020833 * (part1.shape[1] - 2) ** 2
     )
 
-    # Create heatmaps for each part
-    fig, axes = plt.subplots(1, 3, figsize=figsize)
-    cbar_ax = fig.add_axes([0.92, 0.4, 0.02, 0.2])
+    # Initialize structural subplots container canvas layers
+    fig, axes_array = plt.subplots(1, 3, figsize=target_figsize)
+    axes: Sequence[plt.Axes] = (
+        axes_array.tolist() if hasattr(axes_array, "tolist") else axes_array
+    )
+
+    cbar_ax = fig.add_axes((0.92, 0.4, 0.02, 0.2))
 
     plt.subplots_adjust(left=left_pad, right=0.85, wspace=0.4)
 
-    def add_group_labels(axes, part, group_labels):
-        for i, group in enumerate(group_labels):
-            group_indices = np.where(part["Group"] == group)[0]
+    # Functional label generator context helpers
+    def add_group_labels(
+        current_ax: plt.Axes, part_df: pd.DataFrame, group_labels: Sequence[str]
+    ) -> None:
+        for group in group_labels:
+            group_indices = np.where(part_df["Group"] == group)[0]
             if len(group_indices) > 0:
-                y_position = np.mean(group_indices) + 0.5
+                y_position = float(np.mean(group_indices) + 0.5)
                 x_position = -(left_pad / 2)
-                axes.text(
+                current_ax.text(
                     x_position,
                     y_position,
                     group,
@@ -131,91 +167,85 @@ def generate_grouped_heatmap_multi(
                     ),
                 )
 
-    def plot_heatmap(part, group_labels, ax, cbar, cbar_ax=None, cbar_kws=None):
-        # Create the pivot table
-        value_columns = part.columns[
-            1:-1
-        ]  # Adjust this based on your DataFrame structure
+    def plot_heatmap(
+        part_df: pd.DataFrame,
+        group_labels: Sequence[str],
+        ax: plt.Axes,
+        cbar: bool,
+        cbar_axis: Optional[plt.Axes] = None,
+        cbar_kws: Optional[Dict[str, str]] = None,
+    ) -> None:
+        value_columns = part_df.columns[1:-1]
+        part_df[value_columns] = part_df[value_columns].fillna(0)
 
-        # Fill NaN values in the selected columns
-        part[value_columns] = part[value_columns].fillna(0)
-
-        pivot_table = part.set_index("Function")[value_columns]  # Preserve column order
-
-        # Create a mask for rows starting with 'split_'
+        pivot_table = part_df.set_index("Function")[value_columns]
         mask = pivot_table.index.str.startswith("split_")
 
-        # Create the heatmap
         sns.heatmap(
             pivot_table,
-            cmap=f"{color}",
+            cmap=color,
             annot=False,
             linewidths=0.5,
             ax=ax,
             cbar=cbar,
-            cbar_ax=cbar_ax,
+            cbar_ax=cbar_axis,
             cbar_kws=cbar_kws,
-            # square=True,
             mask=np.tile(mask[:, None], (1, pivot_table.shape[1])),
         )
         ax.tick_params(axis="y", labelrotation=0)
-        add_group_labels(ax, part, group_labels)
+        add_group_labels(ax, part_df, group_labels)
 
-        # Hide ticks and labels for rows starting with 'split_'
-        for tick, label in zip(ax.yaxis.get_major_ticks(), ax.get_yticklabels()):
+        # Safely hide structural split markers from y-axes output
+        for label in ax.get_yticklabels():
             if label.get_text().startswith("split_"):
-                label.set_visible(False)  # Hide the label
-                tick.set_visible(False)  # Hide the tick completely
-                tick.tick1line.set_visible(False)  # Hide major tick mark
-                tick.tick2line.set_visible(False)  # Hide minor tick mark
+                label.set_visible(False)
 
+        ax.tick_params(axis="y", which="both", left=False)
+
+    # Map underlying statistical matrices chunk-by-chunk onto partitioned views
     with tqdm(total=3, desc="Creating heatmap parts") as pbar:
-        # Plot for Part 1
         plot_heatmap(part1, part1_groups, axes[0], cbar=False)
         axes[0].set_title("Part 1")
         axes[0].tick_params(axis="x", rotation=45)
         axes[0].set_xticklabels(axes[0].get_xticklabels(), ha="right")
         pbar.update(1)
 
-        # Plot for Part 2
         plot_heatmap(part2, part2_groups, axes[1], cbar=False)
         axes[1].set_title("Part 2")
         axes[1].tick_params(axis="x", rotation=45)
-        axes[1].set_xticklabels(axes[0].get_xticklabels(), ha="right")
+        axes[1].set_xticklabels(axes[1].get_xticklabels(), ha="right")
         pbar.update(1)
 
-        # Plot for Part 3
         plot_heatmap(
             part3,
             part3_groups,
             axes[2],
             cbar=True,
-            cbar_ax=cbar_ax,
+            cbar_axis=cbar_ax,
             cbar_kws={"label": "Pathway completeness"},
         )
         axes[2].set_title("Part 3")
         axes[2].tick_params(axis="x", rotation=45)
-        axes[2].set_xticklabels(axes[0].get_xticklabels(), ha="right")
+        axes[2].set_xticklabels(axes[2].get_xticklabels(), ha="right")
         pbar.update(1)
 
-    # Y-axis labels adjustments
+    # Apply customized typography parameters to coordinate boundaries
     axes[0].set_ylabel("")
     axes[1].set_ylabel("")
     axes[2].set_ylabel("")
 
-    # Adjusting function labels to the right
     for ax in axes:
-        ax.yaxis.tick_right()  # Move y-ticks to the right
-        ax.set_yticklabels(
-            ax.get_yticklabels(), rotation=0, va="center", ha="left"
-        )  # Align labels
+        ax.yaxis.tick_right()
+        ax.set_yticklabels(ax.get_yticklabels(), rotation=0, va="center", ha="left")
 
-    # Layout adjustments
+    # Apply transient layout warnings and write final PNG assets to system disk
     with warnings.catch_warnings():
         warnings.filterwarnings(
             "ignore", category=UserWarning, message=".*tight_layout.*"
         )
-        plt.tight_layout(rect=(0, 0, 0.9, 1))
+        plt.tight_layout(rect=(0.0, 0.0, 0.9, 1.0))
+
     save_heatmap_png(output_folder, dpi)
 
+    # Return active layout context wrappers for external saving pipelines
     return fig, axes

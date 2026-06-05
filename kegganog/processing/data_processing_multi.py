@@ -1,54 +1,81 @@
+#!/usr/bin/env python3
+"""Data parsing, execution, and matrix aggregation engine for multi-cohort workflows.
+
+This module orchestrates parallel or sequential functional evaluation of multiple
+eggNOG-mapper runs, handles matrix transposition, and merges individual pathway
+reconstructions into unified cohort comparative tables.
+"""
+
+from __future__ import annotations
+
 import csv
-import glob
 import io
 import logging
-import os
 import subprocess
 from pathlib import Path
 
 import pandas as pd
 from tqdm import tqdm
 
-from kegganog.processing.data_processing import _ensure_kegg_decoder
+from .data_processing import _ensure_kegg_decoder
 
-_log = logging.getLogger(__name__)
+# Initialize module-level isolated logger
+_log: logging.Logger = logging.getLogger(__name__)
 
 
-# Function to parse eggnog-mapper output and prepare for KEGG-Decoder
-def parse_emapper(input_file, sample_folder, file_prefix):
-    _log.info("Parsing %s", input_file)
+def parse_emapper(
+    input_file: Path | str, sample_folder: Path | str, file_prefix: str
+) -> Path:
+    """Extract and format a single eggNOG annotation table within a multi-sample cohort run.
 
-    # Read the input file with progress bar
-    with tqdm(total=1, desc=f"Reading {file_prefix}") as pbar:
-        header_row = next(
-            i
-            for i, line in enumerate(open(input_file))
-            if line.strip() and not line.startswith("##")
+    Args:
+        input_file: Target raw input path containing annotation tables.
+        sample_folder: Dedicated sample subdirectory allocated for temporary buffers.
+        file_prefix: Unique sample identifier string used for isolation labeling.
+
+    Returns:
+        Path: Location pointer to the reformatted cohort-ready KO map table.
+
+    Raises:
+        KeyError: If the mandatory structural 'KEGG_ko' metadata column is absent.
+    """
+    in_path: Path = Path(input_file)
+    sample_path: Path = Path(sample_folder)
+
+    _log.info("Parsing eggNOG-mapper source file: %s", in_path)
+
+    # Scan annotation document lines securely to detect active header tables
+    with open(in_path, encoding="utf-8") as fh:
+        header_row: int = next(
+            i for i, line in enumerate(fh) if line.strip() and not line.startswith("##")
         )
 
-        df_filtered = pd.read_csv(input_file, sep="\t", skiprows=header_row, header=0)
-
+    # Read target segments into memory using Pandas with live progress metrics
+    with tqdm(total=1, desc=f"Reading {file_prefix}") as pbar:
+        df_filtered: pd.DataFrame = pd.read_csv(
+            in_path, sep="\t", skiprows=header_row, header=0
+        )
         pbar.update(1)
 
-    # Check if 'KEGG_ko' column exists
+    # Enforce operational schema integrity check
     if "KEGG_ko" not in df_filtered.columns:
         raise KeyError(
-            f"'KEGG_ko' column not found in {input_file}. Please check the file format."
+            f"Mandatory 'KEGG_ko' column not found in {in_path.name}. Please verify file format integrity."
         )
 
-    # Filter the 'KEGG_ko' column
-    df_kegg_ko = df_filtered[["KEGG_ko"]]
+    # Extract valid assigned functional metrics block
+    df_kegg_ko: pd.DataFrame = df_filtered[["KEGG_ko"]].copy()
     df_kegg_ko = df_kegg_ko[df_kegg_ko["KEGG_ko"] != "-"]
 
-    # Format 'KEGG_ko' column for KEGG-Decoder
+    # Format specific KO map column spaces using the isolated cohort prefix keys
     with tqdm(total=1, desc=f"Formatting {file_prefix}") as pbar:
         df_kegg_ko["KEGG_ko"] = df_kegg_ko["KEGG_ko"].str.replace(
             r"ko:(K\d+)", rf"{file_prefix} \1", regex=True
         )
         df_kegg_ko["KEGG_ko"] = df_kegg_ko["KEGG_ko"].str.replace(",", "\n")
-        pbar.update(1)
 
-        buffer = io.StringIO()
+        # Pipe string buffers inside system memory using IO representations
+        buffer: io.StringIO = io.StringIO()
         df_kegg_ko.to_csv(
             buffer,
             sep="\t",
@@ -59,78 +86,98 @@ def parse_emapper(input_file, sample_folder, file_prefix):
         )
         buffer.seek(0)
 
-        content = buffer.read().replace('"', "")
+        content: str = buffer.read().replace('"', "")
         pbar.update(1)
 
-    parsed_filtered_file = os.path.join(
-        sample_folder, f"{file_prefix}_parsed_KO_terms.txt"
-    )
-    with open(parsed_filtered_file, "w") as file:
-        file.write(content)
+    # Flush text stream metrics out to physical disk spaces
+    parsed_filtered_file: Path = sample_path / f"{file_prefix}_parsed_KO_terms.txt"
+    parsed_filtered_file.write_text(content, encoding="utf-8")
 
     return parsed_filtered_file
 
 
-# Function to run KEGG-Decoder and process the output
-def run_kegg_decoder(input_file, sample_folder, file_prefix):
-    _log.info("Running KEGG-Decoder on %s", file_prefix)
+def run_kegg_decoder(
+    input_file: Path | str, sample_folder: Path | str, file_prefix: str
+) -> Path:
+    """Execute KEGG-Decoder runner for a specific cohort sample matrix slice.
 
-    output_file = os.path.join(sample_folder, f"{file_prefix}_pathways.tsv")
+    Args:
+        input_file: Source path pointing to the pre-parsed KO map documents.
+        sample_folder: Target location container directory for this specific sample.
+        file_prefix: Unique target sample identity prefix.
 
-    package_dir = Path(__file__).resolve().parent
-    kegg_decoder_script = package_dir / "KEGG_decoder.py"
+    Returns:
+        Path: Location pointer to the generated output pathway TSV table.
+    """
+    in_path: Path = Path(input_file)
+    sample_path: Path = Path(sample_folder)
+    output_file: Path = sample_path / f"{file_prefix}_pathways.tsv"
+
+    _log.info("Executing KEGG-Decoder sub-process wrapper on sample: %s", file_prefix)
+
+    # Locate and validate background engine script dependencies
+    package_dir: Path = Path(__file__).resolve().parent
+    kegg_decoder_script: Path = package_dir / "KEGG_decoder.py"
     _ensure_kegg_decoder(kegg_decoder_script)
 
+    # Trigger subprocess runtime pipeline call
     with tqdm(total=1, desc="Executing KEGG-Decoder") as pbar:
-        command = [
+        command: list[str] = [
             "python",
             str(kegg_decoder_script),
             "-i",
-            input_file,
+            str(in_path),
             "-o",
-            output_file,
+            str(output_file),
         ]
         subprocess.run(command, check=True)
         pbar.update(1)
 
-    with open(output_file, "r") as file:
-        lines = file.readlines()
+    # Perform text transformations to fix column metadata layouts
+    lines: list[str] = output_file.read_text(encoding="utf-8").splitlines(keepends=True)
 
     if lines:
-        first_line = lines[0].strip().split("\t")
-        processed_first_line = [
+        first_line: list[str] = lines[0].strip().split("\t")
+        processed_first_line: list[str] = [
             x.capitalize() if isinstance(x, str) and x.islower() else x
             for x in first_line
         ]
         lines[0] = "\t".join(processed_first_line) + "\n"
 
-    content = "".join(lines)
-    content = content.replace("SAMPLE", file_prefix)
-
-    with open(output_file, "w") as file:
-        file.write(content)
+    # Evict structural placeholder labels in favor of active sample prefix tags
+    content: str = "".join(lines).replace("SAMPLE", file_prefix)
+    output_file.write_text(content, encoding="utf-8")
 
     return output_file
 
 
-# Function to merge all output files into a single TSV file
-def merge_outputs(output_folder):
-    _log.info("Merging all KEGG-Decoder output files...")
+def merge_outputs(output_folder: Path | str) -> pd.DataFrame:
+    """Aggregate individual cohort pathway matrix slices into a single master TSV document.
 
-    merged_df = pd.DataFrame()
+    Transposes matrix tracks, matches functional indexes, and outputs an outer-joined
+    comparative table across all discovered valid sample blocks.
 
-    output_files = glob.glob(
-        os.path.join(output_folder, "temp_files", "*", "*_pathways.tsv")
-    )
+    Args:
+        output_folder: Root output directory hosting the target 'temp_files' space.
 
+    Returns:
+        pd.DataFrame: Merged cohort analytical data matrix layout.
+    """
+    out_dir: Path = Path(output_folder)
+    _log.info("Aggregating individual multi-sample pathway profiles...")
+
+    merged_df: pd.DataFrame = pd.DataFrame()
+
+    # Scan target directories securely using clean Path.glob expressions
+    temp_dir: Path = out_dir / "temp_files"
+    output_files: list[Path] = list(temp_dir.glob("*/*_pathways.tsv"))
+
+    # Iterate and parse metrics blocks into transposable structures
     for file_path in output_files:
-        file_prefix = os.path.splitext(os.path.basename(file_path))[0].replace(
-            "_pathways", ""
-        )
+        file_prefix: str = file_path.stem.replace("_pathways", "")
+        df: pd.DataFrame = pd.read_csv(file_path, sep="\t", index_col=0)
 
-        df = pd.read_csv(file_path, sep="\t", index_col=0)
-
-        df_transposed = df.T
+        df_transposed: pd.DataFrame = df.T
         df_transposed.columns = [file_prefix]
 
         if merged_df.empty:
@@ -140,8 +187,12 @@ def merge_outputs(output_folder):
             merged_df, df_transposed, left_on="Function", right_index=True, how="outer"
         )
 
-    merged_output_file = os.path.join(output_folder, "merged_pathways.tsv")
+    # Flush final integrated dataset to a structural TSV on disk
+    merged_output_file: Path = out_dir / "merged_pathways.tsv"
     merged_df.to_csv(merged_output_file, sep="\t", index=False)
-    _log.info("Files merged successfully into '%s'.", merged_output_file)
+    _log.info(
+        "Cohort files aggregated successfully into master matrix: '%s'",
+        merged_output_file,
+    )
 
     return merged_df

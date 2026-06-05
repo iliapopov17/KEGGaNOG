@@ -1,19 +1,38 @@
-from typing import Optional, Tuple
+#!/usr/bin/env python3
+"""Correlation network visualization module for KEGG module completion profiles.
+
+This module builds standalone topological graph networks tracking sample-to-sample
+reconstruction consistency and mathematical correlation strengths extracted from
+eggNOG-mapper functional annotations.
+"""
+
+from typing import Literal, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import networkx as nx
+import pandas as pd
+from matplotlib import colormaps
 from matplotlib.colors import Colormap
 
 from .base import KgnPlotBase
 
 
 class KgnCorrnet(KgnPlotBase):
-    pass
+    """Orchestration context wrapper encapsulating Matplotlib correlation network layouts."""
+
+    def __init__(self, fig: plt.Figure, ax: plt.Axes) -> None:
+        """Initialize the correlation network canvas with layout metrics.
+
+        Args:
+            fig: The Matplotlib Figure container hosting the drawing canvas.
+            ax: The core underlying Axes coordinate grid mapper.
+        """
+        super().__init__(fig, ax)
 
 
 def correlation_network(
-    df,
-    figsize: Tuple[int, int] = (12, 6),
+    df: pd.DataFrame,
+    figsize: Tuple[float, float] = (12.0, 6.0),
     threshold: float = 0.5,
     node_size: float = 700.0,
     node_color: str = "#A3D5FF",
@@ -21,103 +40,111 @@ def correlation_network(
     node_linewidths: float = 1.5,
     label_fontsize: float = 8.0,
     label_color: str = "#03045E",
-    label_verticalalignment: str = "center",
-    label_horizontalalignment: str = "center",
-    label_weight: str = "normal",
-    edge_cmap: Colormap = plt.cm.coolwarm,
+    label_verticalalignment: Literal["center", "top", "bottom", "baseline"] = "center",
+    label_horizontalalignment: Literal["center", "right", "left"] = "center",
+    label_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
+    edge_cmap: Union[str, Colormap] = colormaps["coolwarm"],
     cbar_size: float = 0.5,
     title: Optional[str] = None,
     title_fontsize: float = 16.0,
     title_color: str = "black",
-    title_weight: str = "normal",
-    title_style: str = "normal",
-    background_color="white",
+    title_weight: Literal["normal", "bold", "heavy", "light"] = "normal",
+    title_style: Literal["normal", "italic", "oblique"] = "normal",
+    background_color: Optional[str] = "white",
     save_matrix: Optional[str] = None,
-):
-    """
-    Generates a customizable correlation network of samples.
+) -> KgnCorrnet:
+    """Generate a publication-grade customizable correlation network for KEGG reconstructions.
 
-    Parameters:
-    - df: Pandas DataFrame containing the dataset.
-    - figsize: Tuple (width, height) of the figure.
-    - threshold: Minimal correlation network to visualize.
-    - node_size, node_color, node_edgecolors, node_linewidths: Node styling.
-    - label_fontsize, label_color, label_verticalalignment, label_horizontalalignment, label_weight: Label styling.
-    - edge_cmap: Colormap or string, optional (default: plt.cm.coolwarm).
-      Specifies the colormap to use for edge coloring in the plot.
-      This can either be a predefined `matplotlib` colormap (e.g., `plt.cm.coolwarm`)
-      or a string representing the name of a colormap (e.g., 'coolwarm', 'viridis').
-    - cbar_size: Colorbar size.
-    - title: Title of the plot.
-    - title_fontsize, title_color, title_weight, title_style: Title styling.
-    - background_color: Background color of the figure.
-    - save_matrix: Path to save the correlation matrix in "tsv" format;
-      if None, matrix is not saved.
+    Computes cross-sample Pearson correlation matrices from functional profiles,
+    filters topological edges using strict minimal thresholds, normalizes graph layout vectors,
+    and maps geometric edge properties to statistical linkage strengths.
+
+    Args:
+        df: Input DataFrame containing parsed pathway completeness vectors.
+        figsize: Geometric allocation limits (width, height) defining canvas borders.
+        threshold: Absolute minimal correlation cut-off required to retain graph edge linkages.
+        node_size: Normalized scalar volume index assigned to network nodes.
+        node_color: Filling color identification token mapped to graph nodes.
+        node_edgecolors: Border outline color identifier separating adjacent nodes.
+        node_linewidths: Structural boundary border scale factor mapped onto nodes.
+        label_fontsize: Typography size constraint allocated to sample text markers.
+        label_color: Text color identifier allocated to central sample labels.
+        label_verticalalignment: Geometric text layout vertical vector alignment constraint.
+        label_horizontalalignment: Geometric text layout horizontal vector alignment constraint.
+        label_weight: Structural typographic density metric specified for graph labels.
+        edge_cmap: Target string colormap descriptor or a native Matplotlib Colormap object.
+        cbar_size: Scaled metric index tracking colorbar widget dimensions.
+        title: Global text message identifier rendering above the drawing matrix.
+        title_fontsize, title_color, title_weight, title_style: Font properties for title.
+        background_color: Primary layout canvas backdrop color mapping.
+        save_matrix: Explicit destination file path to export computed cross-correlation TSV matrix.
 
     Returns:
-    - KgnCorrnet: An object containing the radar plot figure and axis for customization or saving.
+        KgnCorrnet: Container instance holding references to optimized figures.
     """
-
-    # Select numerical columns for correlation analysis
+    # Compute cross-correlation matrix from target numeric profiles
     correlation_matrix = df.iloc[:, 1:].corr()
-
-    # Threshold for strong correlations
     cor_threshold = threshold
 
-    # Create a graph
+    # Initialize topological graph object framework
     G = nx.Graph()
 
-    # Add nodes
     for col in correlation_matrix.columns:
         G.add_node(col)
 
-    # Add edges based on correlation cor.threshold
-    edges = []
+    # Populate network edges based on threshold filtration rules
+    edges_list = []
     for i, col1 in enumerate(correlation_matrix.columns):
         for j, col2 in enumerate(correlation_matrix.columns):
             if i < j and abs(correlation_matrix.iloc[i, j]) > cor_threshold:
                 weight = abs(correlation_matrix.iloc[i, j])
-                edges.append((col1, col2, weight))  # Save edges with weights
+                edges_list.append((col1, col2, weight))
 
-    # Add edges to the graph
-    G.add_weighted_edges_from(edges)
+    G.add_weighted_edges_from(edges_list)
 
-    # Edge widths based on correlation strength
-    weights = [d["weight"] for _, _, d in G.edges(data=True)]
-    max_weight = max(weights)
-    min_weight = min(weights)
+    # Calibrate dynamic edge width arrays to reflect linkage strength
+    if G.number_of_edges() > 0:
+        weights = [d["weight"] for _, _, d in G.edges(data=True)]
+        max_weight = max(weights)
+        min_weight = min(weights)
 
-    # Normalize weights to a width range (e.g., 1.0 to 2.0)
-    edge_widths = [
-        (
-            (1.0 + (w - min_weight) / (max_weight - min_weight))
-            if max_weight > min_weight
-            else 2.0
-        )
-        for w in weights
-    ]
+        edge_widths = [
+            (
+                (1.0 + (w - min_weight) / (max_weight - min_weight))
+                if max_weight > min_weight
+                else 2.0
+            )
+            for w in weights
+        ]
+    else:
+        weights = []
+        edge_widths = []
 
-    # Draw the network
-    # Create figure
+    # Initialize structural subplots container canvas layers
     fig, ax = plt.subplots(figsize=figsize, facecolor=background_color)
-    pos = nx.spring_layout(G, seed=42)  # Layout for nodes
+    pos = nx.spring_layout(G, seed=42)
 
-    # Draw nodes with borders
+    # Map geometric nodes, links, and label annotations onto target axis
     nx.draw_networkx_nodes(
         G,
         pos,
         node_size=node_size,
         node_color=node_color,
-        edgecolors=node_edgecolors,  # Border color
-        linewidths=node_linewidths,  # Border width
+        edgecolors=node_edgecolors,
+        linewidths=node_linewidths,
+        ax=ax,
     )
 
-    # Draw edges with dynamic widths
-    edges = nx.draw_networkx_edges(
-        G, pos, width=edge_widths, alpha=0.7, edge_color=weights, edge_cmap=edge_cmap
+    drawn_edges = nx.draw_networkx_edges(
+        G,
+        pos,
+        width=edge_widths,
+        alpha=0.7,
+        edge_color=weights,
+        edge_cmap=edge_cmap,
+        ax=ax,
     )
 
-    # Draw labels with centering adjustments
     nx.draw_networkx_labels(
         G,
         pos,
@@ -126,27 +153,32 @@ def correlation_network(
         verticalalignment=label_verticalalignment,
         horizontalalignment=label_horizontalalignment,
         font_weight=label_weight,
+        ax=ax,
     )
 
-    # Add colorbar to represent correlation strengths
-    cbar = plt.colorbar(edges, shrink=cbar_size)
-    cbar.set_label("Correlation Strength")
+    # Map colorbar indicators mapping weight vectors
+    if G.number_of_edges() > 0 and drawn_edges is not None:
+        cbar = plt.colorbar(drawn_edges, shrink=cbar_size, ax=ax)
+        cbar.set_label("Correlation Strength")
 
-    # Customize title
-    ax.set_title(
-        title,
-        fontsize=title_fontsize,
-        color=title_color,
-        weight=title_weight,
-        style=title_style,
-    )
+    # Apply customized typography parameters to coordinate boundaries
+    if title:
+        ax.set_title(
+            title,
+            fontsize=title_fontsize,
+            color=title_color,
+            weight=title_weight,
+            style=title_style,
+        )
 
-    plt.axis("off")
+    ax.axis("off")
 
+    # Export computed matrix workspace data if pathways are specified
     if save_matrix:
         correlation_matrix.to_csv(save_matrix, sep="\t")
         print(f"Correlation matrix saved as {save_matrix}")
 
+    # Close active canvas stream descriptors to isolate thread states
     plt.close(fig)
 
     return KgnCorrnet(fig, ax)

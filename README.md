@@ -46,27 +46,30 @@ Usage: KEGGaNOG [OPTIONS]
                                                                                 
  KEGGaNOG: Link eggNOG-mapper and KEGG-Decoder for pathway visualization.       
                                                                                 
-╭─ Options ────────────────────────────────────────────────────────────────────╮
-│ --input      -i              TEXT     Path to eggNOG-mapper annotation file. │
-│ --output     -o              TEXT     Output folder to save results.         │
-│ --multi      -M                       Run KEGGaNOG in multi mode with        │
-│                                       multiple eggNOG-mapper annotation      │
-│                                       files.                                 │
-│ --overwrite  -overwrite               Overwrite the output directory if it   │
-│                                       already exists.                        │
-│ --dpi        -dpi            INTEGER  DPI for the output image.              │
-│                                       [default: 300]                         │
-│ --color      -c              TEXT     Cmap for seaborn heatmap.              │
-│                                       [default: Blues]                       │
-│ --name       -n              TEXT     Sample name for labeling.              │
-│                                       [default: SAMPLE]                      │
-│ --group      -g                       Group the heatmap based on predefined  │
-│                                       categories.                            │
-│ --web                                 Launch local web UI in browser at      │
-│                                       http://localhost:8000.                 │
-│ --version    -V                       Show version and exit.                 │
-│ --help       -h                       Show this message and exit.            │
-╰──────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ──────────────────────────────────────────────────────────────────────────────╮
+│ --input      -i         TEXT                    Path to eggNOG-mapper annotation file. │
+│ --output     -o         TEXT                    Output folder to saveresults.          │
+│ --multi      -M                                 Run KEGGaNOG in multi-sample cohort    │
+│                                                 profile mode.                          │
+│ --overwrite  -overwrite                         Overwrite the output directory if it   │
+│                                                 already exists.                        │
+│ --dpi        -dpi       INTEGER                 DPI resolution mapping index for the   │
+│                                                 output image visualization.            │
+│                                                 [default: 300]                         │
+│ --color      -c         [Blues|Greens|Reds|     Target seaborn color map palette       │
+│                         Purples|Greys|Oranges]  matrix rule.                           │
+│                                                 [default: Blues]                       │
+│ --name       -n         TEXT                    Sample identity text string for        │
+│                                                 axis labeling.                         │
+│                                                 [default: SAMPLE]                      │
+│ --group      -g                                 Group the pathway matrix heatmap rows  │
+│                                                 based on predefined functional         │
+│                                                 categories.                            │
+│ --web                                           Launch the interactive local web UI    │
+│                                                 dashboard at http://localhost:8000.    │
+│ --version    -V                                 Show version and exit.                 │
+│ --help       -h                                 Show this message and exit.            │
+╰────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 🔗 Please visit [KEGGaNOG wiki](https://github.com/iliapopov17/KEGGaNOG/wiki) page
@@ -127,8 +130,8 @@ These figures are generated using functional groupping mode (`-g`/`--group`) and
 
 If you use `KEGGaNOG` in your research, please cite:
 
-[Popov, I.V., Chikindas, M.L., Venema, K., Ermakov, A.M. and Popov, I.V., 2025. 
-KEGGaNOG: A Lightweight Tool for KEGG Module Profiling From Orthology-Based Annotations. 
+[Popov, I.V., Chikindas, M.L., Venema, K., Ermakov, A.M. and Popov, I.V., 2025.
+KEGGaNOG: A Lightweight Tool for KEGG Module Profiling From Orthology-Based Annotations.
 Molecular Nutrition & Food Research, p.e70269.
 doi.org/10.1002/mnfr.70269](https://onlinelibrary.wiley.com/share/author/QAEWYFJAQ6TAZGDW6FJZ?target=10.1002/mnfr.70269)
 

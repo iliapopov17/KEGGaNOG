@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kegganog"
-version = "1.6.3"
+version = "1.6.4"
 description = "A tool for generating KEGG heatmaps from eggNOG-mapper outputs."
 readme = {file = "README.md", content-type = "text/markdown"}
 license = {file = "LICENSE"}
@@ -56,6 +56,8 @@ asyncio_default_fixture_loop_scope = "function"
 filterwarnings = [
     "ignore:This figure includes Axes that are not compatible with tight_layout:UserWarning",
     "ignore:Tight layout not applied.*:UserWarning",
+    "ignore::UserWarning:seaborn",
+    "ignore::PendingDeprecationWarning:seaborn",
 ]
 
 [tool.coverage.run]
